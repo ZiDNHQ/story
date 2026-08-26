@@ -67,6 +67,7 @@
 ## 运行项目
 
 ### 方法一：直接打开
+<img width="2546" height="1377" alt="image" src="https://github.com/user-attachments/assets/3e976963-2991-4701-be53-c7ff071986ca" />
 
 双击打开 `1网站首页.html`，即可查看网站首页。
 
