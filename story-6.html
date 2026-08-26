@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事森林 - 阅读故事</title>
+    <script src="1.css"></script>
+    <link href="2.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        accent: '#f39c12',
+                        neutral: {
+                            100: '#f5f5f5',
+                            200: '#e0e0e0',
+                            300: '#bbbbbb',
+                            400: '#999999',
+                            500: '#777777',
+                            600: '#555555',
+                            700: '#333333',
+                            800: '#222222',
+                            900: '#111111',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 15px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 10px 25px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .card-transition {
+                transition: all 0.3s ease-in-out;
+            }
+            .tag-hover {
+                transition: all 0.2s ease;
+            }
+            .scale-hover {
+                transition: transform 0.4s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.03);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .nav-link {
+                position: relative;
+            }
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -4px;
+                left: 0;
+                background-color: #3498db;
+                transition: width 0.3s ease;
+            }
+            .nav-link:hover::after {
+                width: 100%;
+            }
+            .hero-gradient {
+                background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.8));
+            }
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+            }
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .modal-backdrop {
+                backdrop-filter: blur(5px);
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+        }
+          /* 关键图标样式 */
+        .fa:before { content: ""; display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; }
+        .fa-book-open:before { content: "📖"; }
+        .fa-search:before { content: "🔍"; }
+        .fa-bars:before { content: "☰"; }
+        .fa-eye:before { content: "👁️"; }
+        .fa-star:before { content: "⭐"; }
+        .fa-bookmark:before { content: "🔖"; }
+        .fa-bookmark-o:before { content: "🗳️"; }
+        .fa-arrow-right:before { content: "→"; }
+        .fa-times:before { content: "✕"; }
+    </style>
+</head>
+<body class="font-inter bg-neutral-100 text-neutral-800">
+    <!-- 导航栏 -->
+    <header class="fixed w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="1网站首页.html" class="flex items-center space-x-2">
+                <span class="text-2xl text-primary"><i class="fa fa-book-open"></i></span>
+                <span class="text-xl font-bold text-primary">故事森林</span>
+            </a>
+            
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="1网站首页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">首页</a>
+                <a href="3网站推荐页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">推荐</a>
+                <a href="2网站分类页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">分类</a>
+            </nav>
+            
+            <!-- 用户区域 -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-neutral-200 transition-colors" id="search-toggle">
+                    <i class="fa fa-search text-neutral-600"></i>
+                </button>
+                
+                <div id="user-menu" class="hidden md:flex items-center space-x-3">
+                    <div id="logged-in" class="hidden items-center space-x-2">
+                        <img id="user-avatar" src="https://picsum.photos/32/32" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <span id="username-display" class="text-sm font-medium"></span>
+                        <button id="logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                    </div>
+                    <div id="login-register" class="flex items-center space-x-2">
+                        <button id="login-btn" class="px-3 py-1 text-sm text-secondary border border-secondary rounded-full hover:bg-secondary/5 transition-colors">登录</button>
+                        <button id="register-btn" class="px-3 py-1 text-sm bg-secondary text-white rounded-full hover:bg-secondary/90 transition-colors">注册</button>
+                    </div>
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-full hover:bg-neutral-200 transition-colors">
+                    <i class="fa fa-bars text-neutral-600"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 搜索框 (默认隐藏) -->
+        <div id="search-bar" class="hidden bg-white border-t border-neutral-200 py-3 px-4">
+            <div class="container mx-auto">
+                <div class="relative">
+                    <input type="text" placeholder="搜索故事、作者或标签..." class="w-full pl-10 pr-4 py-2 rounded-full border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" id="search-input">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+                <div id="search-results" class="mt-3 hidden">
+                    <div class="text-sm text-neutral-500 mb-2">搜索结果：</div>
+                    <div id="results-container" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 (默认隐藏) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-neutral-200">
+            <div class="container mx-auto px-4 py-3">
+                <nav class="flex flex-col space-y-3">
+                    <a href="D:\HTML\主体网站.html" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">首页</a>
+                    <a href="推荐页.html" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">推荐</a>
+                    <a href="#categories" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">分类</a>
+                    <a href="#authors" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">作者</a>
+                    <div class="pt-2 border-t border-neutral-200">
+                        <div id="mobile-logged-in" class="hidden flex items-center space-x-3 py-2">
+                            <img id="mobile-user-avatar" src="https://picsum.photos/32/32" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                            <span id="mobile-username" class="text-sm font-medium"></span>
+                            <button id="mobile-logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                        </div>
+                        <div id="mobile-login-register" class="flex space-x-2 pt-2">
+                            <button id="mobile-login-btn" class="flex-1 px-3 py-2 text-sm text-secondary border border-secondary rounded-lg hover:bg-secondary/5 transition-colors">登录</button>
+                            <button id="mobile-register-btn" class="flex-1 px-3 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 阅读页面内容 -->
+    <section class="pt-24 md:pt-32 pb-10 bg-primary">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">第七个受害者</h1>
+            <div class="flex items-center text-white/80 text-sm">
+                <img src="图片\30.jpg" alt="暗夜追凶" class="w-8 h-8 rounded-full object-cover mr-2">
+                <span>暗夜追凶</span>
+                <span class="mx-2">·</span>
+                <span><i class="fa fa-eye mr-1"></i> 3.8k</span>
+                <span class="mx-2">·</span>
+                <span><i class="fa fa-star mr-1"></i> 3.9</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-10 bg-neutral-50">
+        <div class="container mx-auto px-4">
+            <div class="bg-white rounded-xl overflow-hidden shadow-card p-8">
+            <p>暴雨倾盆的深夜，霓虹灯在雨幕中闪烁，宛如一个个朦胧的幽灵。法医林夏蹲在巷口的积水中，手套上的血迹混着雨水，滴落在水泥地上。死者后颈处，一个用刀刻的暗红色数字 “1” 格外醒目，边缘还在渗出鲜血，仿佛是死神留下的第一个印记。
+
+“这是本月第三起了。” 刑警队长陈默撑着伞走到她身后，伞骨上的雨水如珠帘般垂下。他的目光落在那个触目惊心的数字上，眉头紧锁，“前两个受害者分别在锁骨和腰侧发现数字‘2’和‘3’，现在这个是‘1’，凶手到底在玩什么把戏？”
+
+林夏起身摘下手套，指尖还残留着尸体的温度，令人不寒而栗。她沉思着说：“数字顺序混乱，伤口深度却一致，像是某种仪式。” 她的目光扫过死者手腕上的旧疤痕，心中涌起一丝异样的感觉，“而且这三个人，都是器官移植的受益者。”
+
+陈默闻言，眼神骤然一凛。他立刻掏出手机，拨通了警局的电话，声音中透露出紧迫感：“立刻调查近三年全市器官移植的受者名单，尤其是身上有不明纹身的。” 雨点打在他的警服上，发出沙沙的声响，仿佛预示着这场调查将充满艰辛与挑战。</p>
+            <p>一周后，第四具尸体出现在废弃的水族馆。巨大的玻璃幕墙后，水草随水流摇曳，仿佛在为死者举行一场诡异的葬礼。死者心脏位置，一个蓝色的 “4” 刺青格外显眼，墨水还未完全干透，散发着刺鼻的气味。
+
+林夏拿着放大镜仔细观察刺青边缘，突然皱起了眉头：“这个数字的染料里含有荧光剂，和前三起案件的血液刻痕不同。” 她转头看向陈默，发现他正盯着死者左手无名指上的戒指，眼神中透露出一丝警觉。
+
+“戒指内侧刻着‘K・Y’。” 陈默掏出证物袋将戒指放入，声音低沉，“前三个人的随身物品里，分别有‘A・L’、‘S・W’、‘D・Z’的缩写，可能是 donor（捐赠者）的首字母。” 他的手指轻轻敲击着证物袋，仿佛在推敲着其中的关联，“如果数字代表受者顺序，那这些缩写......”
+
+“是器官捐赠者的名字！” 林夏突然恍然大悟，眼中闪过一丝光芒。她迅速掏出手机，调出前几起案件的资料，“第一个死者移植了心脏，捐赠者叫李安；第二个移植了肝脏，捐赠者是苏文......” 她的声音突然哽咽，因为她发现第四起死者的捐赠者，正是三年前因车祸去世的同事 —— 杨洛。
+
+陈默注意到她的异样，关切地问道：“怎么了？”
+
+林夏深吸一口气，努力平复情绪，说：“杨洛的器官捐赠文件...... 当时是我签的字。” 回忆如潮水般涌来，那个暴雨倾盆的夜晚，杨洛被推进手术室时，她颤抖着签下名字的场景，至今仍历历在目。难道这一系列的命案，都与那场车祸有关？</p>
+        <p>当第六具尸体出现在市中心的钟楼时，全城陷入了恐慌。死者的脚踝处，一个金色的 “6” 刺青在阳光下闪烁，仿佛是死神的嘲笑。陈默站在警戒线外，看着人群中惊恐的面孔，心中充满了压力。警局已经收到了匿名信，信上用血红色的字迹写着：“第七日，真相将浮出水面。”
+
+“化验结果出来了。” 林夏匆匆赶来，手中拿着一份报告，眼中透露出震惊，“所有刺青的染料里都含有同一种罕见的酶，这种酶...... 只存在于脑死亡患者的脑脊液中。” 她的声音微微颤抖，仿佛不敢相信这个事实，“凶手在用捐赠者的体液作画。”
+
+陈默的脸色瞬间变得惨白，他突然想起杨洛的尸检报告中提到，脑脊液样本曾莫名丢失。难道凶手一直在收集这些样本，策划着这场可怕的复仇？他的脑海中闪过一个念头，立刻掏出手机拨通了档案科的电话：“查三年前 3・17 连环车祸的幸存者，除了杨洛...... 还有谁？”
+
+电话那头传来键盘敲击的声音，随后是档案员震惊的声音：“当时有七辆车连环追尾，唯一的幸存者是第七辆车的驾驶员，叫沈言。但他在医院昏迷了三个月，醒来后就失踪了......”
+
+陈默和林夏对视一眼，眼中都充满了震惊和恐惧。第七个受害者，难道就是他们自己？就在这时，林夏的手机突然响起，是一个陌生号码发来的视频。画面中，昏暗的地下室里，一个戴着面具的人举起手术刀，刀刃上反射出冷冽的光芒。镜头缓缓下移，停在一个人的手腕上，那里有一个正在渗血的 “7” 字 —— 而那只手，赫然戴着林夏送给杨洛的手表。
+
+“下一个，就是你。” 面具人低沉的声音透过屏幕传来，仿佛来自地狱的召唤。林夏感到一阵眩晕，险些摔倒。陈默连忙扶住她，眼中闪过一丝坚定：“我们必须在第七日前找到沈言，否则一切都晚了。”
+
+暴雨再次降临，仿佛是上天为这场即将到来的对决敲响的战鼓。陈默和林夏站在雨中，看着远处闪烁的警灯，心中充满了决心。他们知道，这是一场与时间的赛跑，也是一场揭开真相的战斗。无论前方等待他们的是什么，他们都必须勇敢地面对，因为这是他们的职责，也是为了那些无辜的受害者讨回公道。
+
+接下来的章节可以围绕 “沈言的双重人生” 展开：陈默和林夏通过杨洛的手表定位到郊区废工厂，却发现沈言早已布置好机关。工厂内七面镜子分别投射出七个受害者的器官捐赠画面，中央冰柜里整齐摆放着标有数字的脑脊液标本。当林夏触碰标本时，警报骤响，天花板开始滴落腐蚀性液体，而墙上投影突然切换成三年前车祸的行车记录仪画面 —— 原来第七辆车的沈言当时为救孕妇猛打方向盘，才导致连环追尾，他自己重伤昏迷后却被舆论指责为肇事者，醒来后发现未婚妻（杨洛的妹妹）因器官被强捐含恨自杀，于是策划了这场 “数字审判”。此时真正的沈言戴着杨洛的婚戒出现在通风管道，他手中的遥控器既连接着炸弹，也连接着揭露器官移植黑幕的加密文件......</p>
+       
+</div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-neutral-200 py-6">
+        <div class="container mx-auto px-4 text-center text-neutral-600 text-sm">
+            &copy; 故事森林. 保留所有权利.
+        </div>
+    </footer>
+
+    <!-- 登录模态框 -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative z-10 fade-in">
+            <button id="close-login" class="absolute top-4 right-4 text-neutral-500 hover:text-neutral-800">
+                <i class="fa fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-center mb-6">登录</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="login-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition-colors">登录</button>
+            </form>
+            <div class="mt-4 text-center">
+                <span class="text-sm text-neutral-600">还没有账号？</span>
+                <button id="switch-to-register" class="text-sm text-secondary hover:underline">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div id="register-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative z-10 fade-in">
+            <button id="close-register" class="absolute top-4 right-4 text-neutral-500 hover:text-neutral-800">
+                <i class="fa fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-center mb-6">注册</h2>
+            <form id="register-form">
+                <div class="mb-4">
+                    <label for="register-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="register-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-4">
+                    <label for="register-email" class="block text-sm font-medium text-neutral-700 mb-1">邮箱</label>
+                    <input type="email" id="register-email" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                </div>
+                <div class="mb-4">
+                    <label for="register-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="register-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <div class="mb-6">
+                    <label for="register-confirm-password" class="block text-sm font-medium text-neutral-700 mb-1">确认密码</label>
+                    <input type="password" id="register-confirm-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+            </form>
+            <div class="mt-4 text-center">
+                <span class="text-sm text-neutral-600">已有账号？</span>
+                <button id="switch-to-login" class="text-sm text-secondary hover:underline">立即登录</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('py-2', 'shadow-md');
+                navbar.classList.remove('py-3', 'shadow-sm');
+            } else {
+                navbar.classList.add('py-3', 'shadow-sm');
+                navbar.classList.remove('py-2', 'shadow-md');
+            }
+        });
+
+        // 搜索框切换
+        const searchToggle = document.getElementById('search-toggle');
+        const searchBar = document.getElementById('search-bar');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const resultsContainer = document.getElementById('results-container');
+
+        searchToggle.addEventListener('click', () => {
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                searchInput.focus();
+            }
+        });
+
+        // 模拟搜索功能
+        const mockSearchResults = [
+            { title: "机械之心", type: "故事", author: "未来探索者" },
+            { title: "数字迷宫", type: "故事", author: "算法大师" },
+            { title: "人工智能", type: "分类", count: 12 },
+            { title: "科技未来", type: "标签", count: 8 },
+            { title: "机器人之恋", type: "故事", author: "科幻小王子" }
+        ];
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            const filteredResults = mockSearchResults.filter(item => 
+                item.title.toLowerCase().includes(query) || 
+                (item.author && item.author.toLowerCase().includes(query)) ||
+                (item.type === "分类" && item.title.toLowerCase().includes(query)) ||
+                (item.type === "标签" && item.title.toLowerCase().includes(query))
+            );
+
+            if (filteredResults.length > 0) {
+                resultsContainer.innerHTML = '';
+                filteredResults.forEach(result => {
+                    const resultEl = document.createElement('div');
+                    resultEl.className = 'p-2 hover:bg-neutral-100 rounded-lg transition-colors flex items-center';
+                    
+                    let icon = '';
+                    if (result.type === "故事") {
+                        icon = '<i class="fa fa-book text-secondary mr-2"></i>';
+                    } else if (result.type === "分类") {
+                        icon = '<i class="fa fa-folder text-accent mr-2"></i>';
+                    } else if (result.type === "标签") {
+                        icon = '<i class="fa fa-tag text-primary mr-2"></i>';
+                    }
+
+                    let subtitle = '';
+                    if (result.author) {
+                        subtitle = `<span class="text-xs text-neutral-500 ml-2">作者: ${result.author}</span>`;
+                    } else if (result.count) {
+                        subtitle = `<span class="text-xs text-neutral-500 ml-2">${result.count} 个内容</span>`;
+                    }
+
+                    resultEl.innerHTML = `
+                        ${icon}
+                        <div>
+                            <div class="text-sm font-medium">${highlightMatch(result.title, query)}</div>
+                            ${subtitle}
+                        </div>
+                    `;
+                    resultsContainer.appendChild(resultEl);
+                });
+                searchResults.classList.remove('hidden');
+            } else {
+                resultsContainer.innerHTML = '<div class="p-2 text-sm text-neutral-500">没有找到相关结果</div>';
+                searchResults.classList.remove('hidden');
+            }
+        });
+
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="bg-yellow-200 font-medium">$1</span>');
+        }
+
+        // 移动端菜单
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 登录注册模态框
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const mobileLoginBtn = document.getElementById('mobile-login-btn');
+        const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+        const closeLogin = document.getElementById('close-login');
+        const closeRegister = document.getElementById('close-register');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+
+        function openLoginModal() {
+            loginModal.classList.remove('hidden');
+            registerModal.classList.add('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openRegisterModal() {
+            registerModal.classList.remove('hidden');
+            loginModal.classList.add('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModals() {
+            loginModal.classList.add('hidden');
+            registerModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        loginBtn.addEventListener('click', openLoginModal);
+        registerBtn.addEventListener('click', openRegisterModal);
+        mobileLoginBtn.addEventListener('click', openLoginModal);
+        mobileRegisterBtn.addEventListener('click', openRegisterModal);
+        closeLogin.addEventListener('click', closeModals);
+        closeRegister.addEventListener('click', closeModals);
+        switchToRegister.addEventListener('click', openRegisterModal);
+        switchToLogin.addEventListener('click', openLoginModal);
+
+        // 点击模态框外部关闭
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) closeModals();
+        });
+
+        registerModal.addEventListener('click', (e) => {
+            if (e.target === registerModal) closeModals();
+        });
+
+        // 登录表单提交
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            // 模拟登录
+            if (username && password) {
+                localStorage.setItem('user', JSON.stringify({
+                    username,
+                    avatar: `https://picsum.photos/32/32?random=${Math.random()}`
+                }));
+                updateUserStatus();
+                closeModals();
+                showNotification('登录成功！');
+            } else {
+                showNotification('请输入用户名和密码', 'error');
+            }
+        });
+
+        // 注册表单提交
+        const registerForm = document.getElementById('register-form');
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // 简单验证
+            if (!username || !email || !password) {
+                showNotification('请填写所有字段', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showNotification('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            // 模拟注册
+            showNotification('注册成功，请登录！');
+            setTimeout(() => {
+                openLoginModal();
+                document.getElementById('login-username').value = username;
+            }, 1500);
+        });
+
+        // 更新用户状态
+        function updateUserStatus() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const loggedIn = document.getElementById('logged-in');
+            const loginRegister = document.getElementById('login-register');
+            const mobileLoggedIn = document.getElementById('mobile-logged-in');
+            const mobileLoginRegister = document.getElementById('mobile-login-register');
+            
+            if (user) {
+                document.getElementById('user-avatar').src = user.avatar;
+                document.getElementById('username-display').textContent = user.username;
+                document.getElementById('mobile-user-avatar').src = user.avatar;
+                document.getElementById('mobile-username').textContent = user.username;
+                
+                loggedIn.classList.remove('hidden');
+                loginRegister.classList.add('hidden');
+                mobileLoggedIn.classList.remove('hidden');
+                mobileLoginRegister.classList.add('hidden');
+            } else {
+                loggedIn.classList.add('hidden');
+                loginRegister.classList.remove('hidden');
+                mobileLoggedIn.classList.add('hidden');
+                mobileLoginRegister.classList.remove('hidden');
+            }
+        }
+
+        // 注销
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            updateUserStatus();
+            showNotification('已注销');
+        });
+
+        document.getElementById('mobile-logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            updateUserStatus();
+            mobileMenu.classList.add('hidden');
+            showNotification('已注销');
+        });
+
+        // 通知提示
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-y-10 opacity-0 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 显示通知
+            setTimeout(() => {
+                notification.classList.remove('translate-y-10', 'opacity-0');
+            }, 100);
+            
+            // 3秒后隐藏通知
+            setTimeout(() => {
+                notification.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // 页面加载时更新用户状态
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUserStatus();
+        });
+    </script>
+</body>
+</html>

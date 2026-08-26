@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事森林 - 阅读故事</title>
+    <script src="1.css"></script>
+    <link href="2.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        accent: '#f39c12',
+                        neutral: {
+                            100: '#f5f5f5',
+                            200: '#e0e0e0',
+                            300: '#bbbbbb',
+                            400: '#999999',
+                            500: '#777777',
+                            600: '#555555',
+                            700: '#333333',
+                            800: '#222222',
+                            900: '#111111',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 15px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 10px 25px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .card-transition {
+                transition: all 0.3s ease-in-out;
+            }
+            .tag-hover {
+                transition: all 0.2s ease;
+            }
+            .scale-hover {
+                transition: transform 0.4s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.03);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .nav-link {
+                position: relative;
+            }
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -4px;
+                left: 0;
+                background-color: #3498db;
+                transition: width 0.3s ease;
+            }
+            .nav-link:hover::after {
+                width: 100%;
+            }
+            .hero-gradient {
+                background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.8));
+            }
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+            }
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .modal-backdrop {
+                backdrop-filter: blur(5px);
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+        }
+          /* 关键图标样式 */
+        .fa:before { content: ""; display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; }
+        .fa-book-open:before { content: "📖"; }
+        .fa-search:before { content: "🔍"; }
+        .fa-bars:before { content: "☰"; }
+        .fa-eye:before { content: "👁️"; }
+        .fa-star:before { content: "⭐"; }
+        .fa-bookmark:before { content: "🔖"; }
+        .fa-bookmark-o:before { content: "🗳️"; }
+        .fa-arrow-right:before { content: "→"; }
+        .fa-times:before { content: "✕"; }
+    </style>
+</head>
+<body class="font-inter bg-neutral-100 text-neutral-800">
+    <!-- 导航栏 -->
+    <header class="fixed w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="1网站首页.html" class="flex items-center space-x-2">
+                <span class="text-2xl text-primary"><i class="fa fa-book-open"></i></span>
+                <span class="text-xl font-bold text-primary">故事森林</span>
+            </a>
+            
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="1网站首页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">首页</a>
+                <a href="3网站推荐页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">推荐</a>
+                <a href="2网站分类页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">分类</a>
+            </nav>
+            
+            <!-- 用户区域 -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-neutral-200 transition-colors" id="search-toggle">
+                    <i class="fa fa-search text-neutral-600"></i>
+                </button>
+                
+                <div id="user-menu" class="hidden md:flex items-center space-x-3">
+                    <div id="logged-in" class="hidden items-center space-x-2">
+                        <img id="user-avatar" src="https://picsum.photos/32/32" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <span id="username-display" class="text-sm font-medium"></span>
+                        <button id="logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                    </div>
+                    <div id="login-register" class="flex items-center space-x-2">
+                        <button id="login-btn" class="px-3 py-1 text-sm text-secondary border border-secondary rounded-full hover:bg-secondary/5 transition-colors">登录</button>
+                        <button id="register-btn" class="px-3 py-1 text-sm bg-secondary text-white rounded-full hover:bg-secondary/90 transition-colors">注册</button>
+                    </div>
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-full hover:bg-neutral-200 transition-colors">
+                    <i class="fa fa-bars text-neutral-600"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 搜索框 (默认隐藏) -->
+        <div id="search-bar" class="hidden bg-white border-t border-neutral-200 py-3 px-4">
+            <div class="container mx-auto">
+                <div class="relative">
+                    <input type="text" placeholder="搜索故事、作者或标签..." class="w-full pl-10 pr-4 py-2 rounded-full border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" id="search-input">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+                <div id="search-results" class="mt-3 hidden">
+                    <div class="text-sm text-neutral-500 mb-2">搜索结果：</div>
+                    <div id="results-container" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 (默认隐藏) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-neutral-200">
+            <div class="container mx-auto px-4 py-3">
+                <nav class="flex flex-col space-y-3">
+                    <a href="D:\HTML\主体网站.html" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">首页</a>
+                    <a href="推荐页.html" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">推荐</a>
+                    <a href="#categories" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">分类</a>
+                    <a href="#authors" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">作者</a>
+                    <div class="pt-2 border-t border-neutral-200">
+                        <div id="mobile-logged-in" class="hidden flex items-center space-x-3 py-2">
+                            <img id="mobile-user-avatar" src="https://picsum.photos/32/32" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                            <span id="mobile-username" class="text-sm font-medium"></span>
+                            <button id="mobile-logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                        </div>
+                        <div id="mobile-login-register" class="flex space-x-2 pt-2">
+                            <button id="mobile-login-btn" class="flex-1 px-3 py-2 text-sm text-secondary border border-secondary rounded-lg hover:bg-secondary/5 transition-colors">登录</button>
+                            <button id="mobile-register-btn" class="flex-1 px-3 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 阅读页面内容 -->
+    <section class="pt-24 md:pt-32 pb-10 bg-primary">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">穿越时空的爱恋</h1>
+            <div class="flex items-center text-white/80 text-sm">
+                <img src="图片\5.jpg" alt="樱花树下" class="w-8 h-8 rounded-full object-cover mr-2">
+                <span>樱花树下</span>
+                <span class="mx-2">·</span>
+                <span><i class="fa fa-eye mr-1"></i> 3.2k</span>
+                <span class="mx-2">·</span>
+                <span><i class="fa fa-star mr-1"></i> 4.9</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-10 bg-neutral-50">
+        <div class="container mx-auto px-4">
+            <div class="bg-white rounded-xl overflow-hidden shadow-card p-8">
+            
+<p>玉戒的双生时空
+
+林小雨的指尖刚触到戒指内侧的纹路，太阳穴便炸开细密的刺痛。等她再睁开眼，手中的洛阳铲已变成雕花银簪，正插在青砖缝里。四周是飘着雪的庭院，廊下挂着的冰棱子映出她身上的月白襦裙——这是她第三次穿越到北宋嘉祐年间。
+
+“小姐，该喝安胎药了。”丫鬟翠儿掀开棉帘，铜碗里的汤药腾起白雾。林小雨摸向小腹，触感平坦如常，可镜中女子的面容却比现代的自己圆润几分。她突然注意到梳妆台上的金丝楠木匣——上次穿越时，她曾在匣底刻下“2023.3.15”的字样。
+
+匣盖掀开的瞬间，木屑簌簌落在“嘉祐三年腊月廿七”的刻痕上。两行字在月光下交叠，像两条试图触碰的时间线。翠儿突然指着她的手：“小姐的玉戒怎么碎了？”
+
+碎玉里的时空虫洞
+
+那枚本应完整的翡翠戒指，此刻在掌心裂成两半。缝隙间渗出幽蓝微光，林小雨眼睁睁看着现代实验室的天花板在裂隙中一闪而过——她的左手还戴着实验室的橡胶手套，而右手正握着半块碎玉。
+
+“这是时空锚点。”她对着空气自语，北宋的雪落在现代的白大褂上，竟化作冰晶般的数码颗粒。当碎玉重新拼合时，她发现内侧多了行小篆：**欲归本位，需寻双生魂。**
+
+第三次穿越时，她在汴河画舫遇见戴相同玉戒的男子。他作书生打扮，却在袖口藏着现代的电子元件。四目相对的刹那，两人掌心的碎玉同时发烫，裂隙中浮现出相同的实验室编号：LT-07。
+
+“我是2035年的你。”男子低声道，船外的河市灯影与全息投影重叠，“我们在修复古镜时触发了时空场，现在每一次穿越都会让两个时空的时间流速差扩大。”</p>
+
+<p>双生魂的悖论
+
+林小雨在现代实验室的电脑里发现了2035年的研究日志：**当两个时空的‘林小雨’同时存在时，现实将产生坍缩。唯一解法是让其中一个时空的意识永久沉睡。**
+
+北宋的雪越下越大，书生（未来的自己）递来半片安眠药：“嘉祐三年的你即将生产，而2023年的你会在三天后死于实验事故。我们必须选择谁该留下来。”
+
+她看着铜镜里的两张面孔，年轻的自己抚着腹部露出母性的微笑，未来的自己眼底藏着沧桑。碎玉在掌心震动，裂隙中浮现出更遥远的时空——某个她从未经历过的未来，人类早已放弃肉体，以意识体在时空中游荡。
+
+“如果我们都不选呢？”她将药片碾成粉末，撒进雪地里，“或许玉戒的真正使命，是让不同时空的我们学会共存。”</p>
+
+<p>时空琥珀
+
+当碎玉第三次拼合时，林小雨发现自己站在实验室与北宋庭院的叠加空间里。两个时空的翠儿和助手同时出现在她左右，手中捧着相同的古籍残卷。
+
+“看这里。”两个自己的声音重叠，残卷上的蝌蚪文化作数据流：**双生魂，非二选一，乃合二为一。**
+
+她将现代的修复液滴在北宋的断弦琴上，裂痕竟开始自动愈合。当未来的自己将意识芯片嵌入古镜时，所有的时空裂隙突然绽放成璀璨的琥珀光。林小雨看着自己的双手同时戴上橡胶手套和玉镯，两种身份的记忆在脑海中流淌，却不再相互排斥。</p>
+
+ <p>永恒的现在
+
+实验室的警报声中，2023年的林小雨猛然睁眼，掌心躺着完整的玉戒。电脑屏幕显示：“时空修复完成，平行宇宙已建立独立锚点。”
+
+她摸向颈间，多了条从未见过的银链，链子上挂着半块碎玉——正是北宋书生（未来的自己）留给她的信物。窗外，2035年的月光与嘉祐三年的雪同时落在实验台上，在玉戒表面织出永恒的光纹。
+
+如今，当她再次戴上玉戒，不再是穿越时空，而是能同时感受到三个时空的风：北宋汴河的桨声灯影、现代实验室的无菌气流、未来宇宙的星际尘埃。那些曾以为是悖论的存在，最终化作她眼中的星图——每一个时空的自己，都在不同的坐标上，共同守护着人类对时间与文明的敬畏。</p>
+
+<p>尾声
+
+在实验室的保险柜里，除了玉戒，还多了本跨时空的笔记。第一页写着：**时间不是一条单行道，而是我们戴在指尖的环。当我们学会与不同的自己和解，或许就能触碰到永恒的真谛——不是永生，而是让每个‘现在’都活得足够丰盛。 
+
+窗外，银河清晰可见。林小雨对着星空举起玉戒，裂隙中闪过无数个平行时空的自己，每个她都在微笑着挥手。原来，真正的穿越从来不是改变过去或未来，而是学会在每一个当下，都成为连接时空的桥。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-neutral-200 py-6">
+        <div class="container mx-auto px-4 text-center text-neutral-600 text-sm">
+            &copy; 2024 故事森林. 保留所有权利.
+        </div>
+    </footer>
+
+    <!-- 登录模态框 -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative z-10 fade-in">
+            <button id="close-login" class="absolute top-4 right-4 text-neutral-500 hover:text-neutral-800">
+                <i class="fa fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-center mb-6">登录</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="login-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition-colors">登录</button>
+            </form>
+            <div class="mt-4 text-center">
+                <span class="text-sm text-neutral-600">还没有账号？</span>
+                <button id="switch-to-register" class="text-sm text-secondary hover:underline">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div id="register-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-backdrop absolute inset-0"></div>
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative z-10 fade-in">
+            <button id="close-register" class="absolute top-4 right-4 text-neutral-500 hover:text-neutral-800">
+                <i class="fa fa-times"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-center mb-6">注册</h2>
+            <form id="register-form">
+                <div class="mb-4">
+                    <label for="register-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="register-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-4">
+                    <label for="register-email" class="block text-sm font-medium text-neutral-700 mb-1">邮箱</label>
+                    <input type="email" id="register-email" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                </div>
+                <div class="mb-4">
+                    <label for="register-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="register-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <div class="mb-6">
+                    <label for="register-confirm-password" class="block text-sm font-medium text-neutral-700 mb-1">确认密码</label>
+                    <input type="password" id="register-confirm-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="w-full bg-secondary text-white py-2 rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+            </form>
+            <div class="mt-4 text-center">
+                <span class="text-sm text-neutral-600">已有账号？</span>
+                <button id="switch-to-login" class="text-sm text-secondary hover:underline">立即登录</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 导航栏滚动效果
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('py-2', 'shadow-md');
+                navbar.classList.remove('py-3', 'shadow-sm');
+            } else {
+                navbar.classList.add('py-3', 'shadow-sm');
+                navbar.classList.remove('py-2', 'shadow-md');
+            }
+        });
+
+        // 搜索框切换
+        const searchToggle = document.getElementById('search-toggle');
+        const searchBar = document.getElementById('search-bar');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const resultsContainer = document.getElementById('results-container');
+
+        searchToggle.addEventListener('click', () => {
+            searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) {
+                searchInput.focus();
+            }
+        });
+
+        // 模拟搜索功能
+        const mockSearchResults = [
+            { title: "机械之心", type: "故事", author: "未来探索者" },
+            { title: "数字迷宫", type: "故事", author: "算法大师" },
+            { title: "人工智能", type: "分类", count: 12 },
+            { title: "科技未来", type: "标签", count: 8 },
+            { title: "机器人之恋", type: "故事", author: "科幻小王子" }
+        ];
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+
+            const filteredResults = mockSearchResults.filter(item => 
+                item.title.toLowerCase().includes(query) || 
+                (item.author && item.author.toLowerCase().includes(query)) ||
+                (item.type === "分类" && item.title.toLowerCase().includes(query)) ||
+                (item.type === "标签" && item.title.toLowerCase().includes(query))
+            );
+
+            if (filteredResults.length > 0) {
+                resultsContainer.innerHTML = '';
+                filteredResults.forEach(result => {
+                    const resultEl = document.createElement('div');
+                    resultEl.className = 'p-2 hover:bg-neutral-100 rounded-lg transition-colors flex items-center';
+                    
+                    let icon = '';
+                    if (result.type === "故事") {
+                        icon = '<i class="fa fa-book text-secondary mr-2"></i>';
+                    } else if (result.type === "分类") {
+                        icon = '<i class="fa fa-folder text-accent mr-2"></i>';
+                    } else if (result.type === "标签") {
+                        icon = '<i class="fa fa-tag text-primary mr-2"></i>';
+                    }
+
+                    let subtitle = '';
+                    if (result.author) {
+                        subtitle = `<span class="text-xs text-neutral-500 ml-2">作者: ${result.author}</span>`;
+                    } else if (result.count) {
+                        subtitle = `<span class="text-xs text-neutral-500 ml-2">${result.count} 个内容</span>`;
+                    }
+
+                    resultEl.innerHTML = `
+                        ${icon}
+                        <div>
+                            <div class="text-sm font-medium">${highlightMatch(result.title, query)}</div>
+                            ${subtitle}
+                        </div>
+                    `;
+                    resultsContainer.appendChild(resultEl);
+                });
+                searchResults.classList.remove('hidden');
+            } else {
+                resultsContainer.innerHTML = '<div class="p-2 text-sm text-neutral-500">没有找到相关结果</div>';
+                searchResults.classList.remove('hidden');
+            }
+        });
+
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="bg-yellow-200 font-medium">$1</span>');
+        }
+
+        // 移动端菜单
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 登录注册模态框
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const mobileLoginBtn = document.getElementById('mobile-login-btn');
+        const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+        const loginModal = document.getElementById('login-modal');
+        const registerModal = document.getElementById('register-modal');
+        const closeLogin = document.getElementById('close-login');
+        const closeRegister = document.getElementById('close-register');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+
+        function openLoginModal() {
+            loginModal.classList.remove('hidden');
+            registerModal.classList.add('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openRegisterModal() {
+            registerModal.classList.remove('hidden');
+            loginModal.classList.add('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModals() {
+            loginModal.classList.add('hidden');
+            registerModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        loginBtn.addEventListener('click', openLoginModal);
+        registerBtn.addEventListener('click', openRegisterModal);
+        mobileLoginBtn.addEventListener('click', openLoginModal);
+        mobileRegisterBtn.addEventListener('click', openRegisterModal);
+        closeLogin.addEventListener('click', closeModals);
+        closeRegister.addEventListener('click', closeModals);
+        switchToRegister.addEventListener('click', openRegisterModal);
+        switchToLogin.addEventListener('click', openLoginModal);
+
+        // 点击模态框外部关闭
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) closeModals();
+        });
+
+        registerModal.addEventListener('click', (e) => {
+            if (e.target === registerModal) closeModals();
+        });
+
+        // 登录表单提交
+        const loginForm = document.getElementById('login-form');
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            // 模拟登录
+            if (username && password) {
+                localStorage.setItem('user', JSON.stringify({
+                    username,
+                    avatar: `https://picsum.photos/32/32?random=${Math.random()}`
+                }));
+                updateUserStatus();
+                closeModals();
+                showNotification('登录成功！');
+            } else {
+                showNotification('请输入用户名和密码', 'error');
+            }
+        });
+
+        // 注册表单提交
+        const registerForm = document.getElementById('register-form');
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            // 简单验证
+            if (!username || !email || !password) {
+                showNotification('请填写所有字段', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showNotification('两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            // 模拟注册
+            showNotification('注册成功，请登录！');
+            setTimeout(() => {
+                openLoginModal();
+                document.getElementById('login-username').value = username;
+            }, 1500);
+        });
+
+        // 更新用户状态
+        function updateUserStatus() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const loggedIn = document.getElementById('logged-in');
+            const loginRegister = document.getElementById('login-register');
+            const mobileLoggedIn = document.getElementById('mobile-logged-in');
+            const mobileLoginRegister = document.getElementById('mobile-login-register');
+            
+            if (user) {
+                document.getElementById('user-avatar').src = user.avatar;
+                document.getElementById('username-display').textContent = user.username;
+                document.getElementById('mobile-user-avatar').src = user.avatar;
+                document.getElementById('mobile-username').textContent = user.username;
+                
+                loggedIn.classList.remove('hidden');
+                loginRegister.classList.add('hidden');
+                mobileLoggedIn.classList.remove('hidden');
+                mobileLoginRegister.classList.add('hidden');
+            } else {
+                loggedIn.classList.add('hidden');
+                loginRegister.classList.remove('hidden');
+                mobileLoggedIn.classList.add('hidden');
+                mobileLoginRegister.classList.remove('hidden');
+            }
+        }
+
+        // 注销
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            updateUserStatus();
+            showNotification('已注销');
+        });
+
+        document.getElementById('mobile-logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            updateUserStatus();
+            mobileMenu.classList.add('hidden');
+            showNotification('已注销');
+        });
+
+        // 通知提示
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-y-10 opacity-0 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 显示通知
+            setTimeout(() => {
+                notification.classList.remove('translate-y-10', 'opacity-0');
+            }, 100);
+            
+            // 3秒后隐藏通知
+            setTimeout(() => {
+                notification.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // 页面加载时更新用户状态
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUserStatus();
+        });
+    </script>
+</body>
+</html>

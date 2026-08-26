@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事森林 - 为你推荐</title>
+    <script src="1.css"></script>
+    <link href="2.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        accent: '#f39c12',
+                        neutral: {
+                            100: '#f5f5f5',
+                            200: '#e0e0e0',
+                            300: '#bbbbbb',
+                            400: '#999999',
+                            500: '#777777',
+                            600: '#555555',
+                            700: '#333333',
+                            800: '#222222',
+                            900: '#111111',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 15px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 10px 25px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .card-transition {
+                transition: all 0.3s ease-in-out;
+            }
+            .tag-hover {
+                transition: all 0.2s ease;
+            }
+            .scale-hover {
+                transition: transform 0.4s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.03);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .nav-link {
+                position: relative;
+            }
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -4px;
+                left: 0;
+                background-color: #3498db;
+                transition: width 0.3s ease;
+            }
+            .nav-link:hover::after {
+                width: 100%;
+            }
+            .hero-gradient {
+                background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.8));
+            }
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+            }
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .modal-backdrop {
+                backdrop-filter: blur(5px);
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+        }
+          /* 关键图标样式 */
+        .fa:before { content: ""; display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; }
+        .fa-book-open:before { content: "📖"; }
+        .fa-search:before { content: "🔍"; }
+        .fa-bars:before { content: "☰"; }
+        .fa-eye:before { content: "👁️"; }
+        .fa-star:before { content: "⭐"; }
+        .fa-bookmark:before { content: "🔖"; }
+        .fa-bookmark-o:before { content: "🗳️"; }
+        .fa-arrow-right:before { content: "→"; }
+        .fa-times:before { content: "✕"; }
+    </style>
+</head>
+<body class="font-inter bg-neutral-100 text-neutral-800">
+    <!-- 导航栏 -->
+    <header class="fixed w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="1网站首页.html" class="flex items-center space-x-2">
+                <span class="text-2xl text-primary"><i class="fa fa-book-open"></i></span>
+                <span class="text-xl font-bold text-primary">故事森林</span>
+            </a>
+            
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="1网站首页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">首页</a>
+                <a href="#recommend" class="nav-link text-secondary font-medium">推荐</a>
+                <a href="2网站分类页.html" class="nav-link text-neutral-700 hover:text-secondary transition-colors">分类</a>
+            </nav>
+            
+            <!-- 用户区域 -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-neutral-200 transition-colors" id="search-toggle">
+                    <i class="fa fa-search text-neutral-600"></i>
+                </button>
+                
+                <div id="user-menu" class="hidden md:flex items-center space-x-3">
+                    <div id="logged-in" class="hidden items-center space-x-2">
+                        <img id="user-avatar" src="图片/12.jpg" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <span id="username-display" class="text-sm font-medium"></span>
+                        <button id="logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                    </div>
+                    <div id="login-register" class="flex items-center space-x-2">
+                        <button id="login-btn" class="px-3 py-1 text-sm text-secondary border border-secondary rounded-full hover:bg-secondary/5 transition-colors">登录</button>
+                        <button id="register-btn" class="px-3 py-1 text-sm bg-secondary text-white rounded-full hover:bg-secondary/90 transition-colors">注册</button>
+                    </div>
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-full hover:bg-neutral-200 transition-colors">
+                    <i class="fa fa-bars text-neutral-600"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 搜索框 (默认隐藏) -->
+        <div id="search-bar" class="hidden bg-white border-t border-neutral-200 py-3 px-4">
+            <div class="container mx-auto">
+                <div class="relative">
+                    <input type="text" placeholder="搜索故事、作者或标签..." class="w-full pl-10 pr-4 py-2 rounded-full border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" id="search-input">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+                <div id="search-results" class="mt-3 hidden">
+                    <div class="text-sm text-neutral-500 mb-2">搜索结果：</div>
+                    <div id="results-container" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 (默认隐藏) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-neutral-200">
+            <div class="container mx-auto px-4 py-3">
+                <nav class="flex flex-col space-y-3">
+                    <a href="1网站首页.html" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">首页</a>
+                    <a href="#recommend" class="py-2 px-4 bg-secondary/10 text-secondary rounded-lg">推荐</a>
+                    <a href="#categories" class="py-2 px-4 hover:bg-neutral-100 rounded-lg transition-colors">分类</a>
+                   
+                    <div class="pt-2 border-t border-neutral-200">
+                        <div id="mobile-logged-in" class="hidden flex items-center space-x-3 py-2">
+                            <img id="mobile-user-avatar" src="图片/12.jpg" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                            <span id="mobile-username" class="text-sm font-medium"></span>
+                            <button id="mobile-logout-btn" class="text-xs text-neutral-500 hover:text-neutral-700">注销</button>
+                        </div>
+                        <div id="mobile-login-register" class="flex space-x-2 pt-2">
+                            <button id="mobile-login-btn" class="flex-1 px-3 py-2 text-sm text-secondary border border-secondary rounded-lg hover:bg-secondary/5 transition-colors">登录</button>
+                            <button id="mobile-register-btn" class="flex-1 px-3 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 登录模态框 -->
+    <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">用户登录</h3>
+                <button id="close-login-modal" class="text-neutral-500 hover:text-neutral-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="login-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="login-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="login-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember-me" class="mr-2">
+                        <label for="remember-me" class="text-sm text-neutral-600">记住我</label>
+                    </div>
+                    <a href="#" class="text-sm text-secondary hover:text-secondary/80">忘记密码？</a>
+                </div>
+                <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">登录</button>
+            </form>
+            <div class="mt-4 text-center text-sm text-neutral-600">
+                还没有账号？ <button id="show-register" class="text-secondary hover:text-secondary/80">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div id="register-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 transform transition-all scale-95 opacity-0" id="register-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">用户注册</h3>
+                <button id="close-register-modal" class="text-neutral-500 hover:text-neutral-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <form id="register-form">
+                <div class="mb-4">
+                    <label for="register-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <input type="text" id="register-username" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                </div>
+                <div class="mb-4">
+                    <label for="register-email" class="block text-sm font-medium text-neutral-700 mb-1">邮箱</label>
+                    <input type="email" id="register-email" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                </div>
+                <div class="mb-4">
+                    <label for="register-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <input type="password" id="register-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                </div>
+                <div class="mb-6">
+                    <label for="register-confirm-password" class="block text-sm font-medium text-neutral-700 mb-1">确认密码</label>
+                    <input type="password" id="register-confirm-password" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+            </form>
+            <div class="mt-4 text-center text-sm text-neutral-600">
+                已有账号？ <button id="show-login" class="text-secondary hover:text-secondary/80">立即登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 阅读故事模态框 -->
+    <div id="story-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden modal-backdrop">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto transform transition-all scale-95 opacity-0" id="story-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary" id="story-modal-title"></h3>
+                <button id="close-story-modal" class="text-neutral-500 hover:text-neutral-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/3">
+                    <img id="story-modal-image" src="" alt="" class="w-full h-auto rounded-lg">
+                    <div class="mt-4">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-accent/90 px-2 py-0.5 rounded text-xs text-white" id="story-modal-category"></span>
+                        </div>
+                        <div class="flex items-center text-sm text-neutral-500 mb-2">
+                            <img id="story-modal-author-avatar" src="" alt="" class="w-6 h-6 rounded-full mr-2">
+                            <span id="story-modal-author"></span>
+                        </div>
+                        <div class="flex items-center text-sm text-neutral-500">
+                            <span><i class="fa fa-eye mr-1"></i> <span id="story-modal-views"></span></span>
+                            <span class="mx-2">·</span>
+                            <span><i class="fa fa-star mr-1"></i> <span id="story-modal-rating"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-2/3">
+                    <div class="prose max-w-none" id="story-modal-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 推荐页头部 -->
+    <section class="pt-24 md:pt-32 pb-10 bg-primary">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">为你推荐</h1>
+            <p class="text-white/80">基于你的阅读偏好和历史，精选适合你的故事</p>
+        </div>
+    </section>
+
+    <!-- 推荐内容区域 -->
+    <section class="py-10 bg-neutral-50">
+        <div class="container mx-auto px-4">
+            <!-- 个性化推荐 -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-primary mb-6 flex items-center">
+                    <i class="fa fa-heart text-accent mr-2"></i> 个性化推荐
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 推荐故事卡片 1 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover">
+                        <div class="relative">
+                            <img src="图片\27.jpg" alt="机械之心" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <button class="add-to-bookmark p-2 rounded-full bg-white/80 text-secondary hover:bg-white transition-colors" data-id="11">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <div class="flex items-center text-white text-sm mb-1">
+                                    <span class="bg-accent/90 px-2 py-0.5 rounded text-xs">科幻</span>
+                                    <span class="ml-2"><i class="fa fa-eye mr-1"></i> 3.2k</span>
+                                    <span class="ml-2"><i class="fa fa-star mr-1"></i> 4.9</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold mb-2 line-clamp-2">机械之心</h3>
+                            <p class="text-neutral-600 mb-4 line-clamp-3">在2145年，人类与机械共生的时代，一个拥有人类情感的机器人发现了自己的特殊能力，这将改变整个世界...</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\28.jpg" alt="未来探索者" class="w-8 h-8 rounded-full object-cover mr-2">
+                                    <span class="text-sm font-medium">未来探索者</span>
+                                </div>
+                                <a href="story-1.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="11">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推荐故事卡片 2 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover">
+                        <div class="relative">
+                            <img src="图片\29.jpg" alt="第七个受害者" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <button class="add-to-bookmark p-2 rounded-full bg-white/80 text-secondary hover:bg-white transition-colors" data-id="12">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <div class="flex items-center text-white text-sm mb-1">
+                                    <span class="bg-accent/90 px-2 py-0.5 rounded text-xs">悬疑</span>
+                                    <span class="ml-2"><i class="fa fa-eye mr-1"></i> 2.8k</span>
+                                    <span class="ml-2"><i class="fa fa-star mr-1"></i> 4.7</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold mb-2 line-clamp-2">第七个受害者</h3>
+                            <p class="text-neutral-600 mb-4 line-clamp-3">连续发生的离奇命案，每个受害者身上都有一个神秘的数字纹身。当第七个受害者出现时，一切开始变得不同...</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\30.jpg" alt="暗夜追凶" class="w-8 h-8 rounded-full object-cover mr-2">
+                                    <span class="text-sm font-medium">暗夜追凶</span>
+                                </div>
+                                <a href="story-6.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="12">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推荐故事卡片 3 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover">
+                        <div class="relative">
+                            <img src="图片\31.jpg" alt="贞观秘事" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <button class="add-to-bookmark p-2 rounded-full bg-white/80 text-secondary hover:bg-white transition-colors" data-id="13">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <div class="flex items-center text-white text-sm mb-1">
+                                    <span class="bg-accent/90 px-2 py-0.5 rounded text-xs">历史</span>
+                                    <span class="ml-2"><i class="fa fa-eye mr-1"></i> 2.1k</span>
+                                    <span class="ml-2"><i class="fa fa-star mr-1"></i> 4.8</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-xl font-bold mb-2 line-clamp-2">贞观秘事</h3>
+                            <p class="text-neutral-600 mb-4 line-clamp-3">贞观年间，一桩看似普通的盗窃案背后，竟隐藏着一个足以动摇大唐根基的惊天阴谋。年轻的大理寺丞李明奉命调查...</p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\32.jpg" alt="历史探秘者" class="w-8 h-8 rounded-full object-cover mr-2">
+                                    <span class="text-sm font-medium">历史探秘者</span>
+                                </div>
+                                <a href="story-7.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <button id="load-more" class="px-6 py-2 border border-secondary text-secondary rounded-full hover:bg-secondary/5 transition-colors">
+                        <a href="4网站推荐页分页.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读更多</a>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+            
+            <!-- 热门榜单 -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold text-primary mb-6 flex items-center">
+                    <i class="fa fa-fire text-red-500 mr-2"></i> 热门榜单
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 本周热门 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="bg-primary p-4 text-white">
+                            <h3 class="font-bold text-lg">本周热门</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold mr-3">1</div>
+                                    <img src="图片\2.jpg" alt="星际迷航：无尽边疆" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">星际迷航：无尽边疆</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>银河旅行者</span>
+                                            <span class="mx-2">·</span>
+                                            <span><i class="fa fa-eye mr-1"></i> 2.4k</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.8</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-red-400 text-white rounded-full flex items-center justify-center font-bold mr-3">2</div>
+                                    <img src="图片\4.jpg" alt="雨夜谋杀案" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">雨夜谋杀案</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>黑猫警长</span>
+                                            <span class="mx-2">·</span>
+                                            <span><i class="fa fa-eye mr-1"></i> 1.8k</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.7</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-red-300 text-white rounded-full flex items-center justify-center font-bold mr-3">3</div>
+                                    <img src="图片\13.jpg" alt="穿越时空的爱恋" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">穿越时空的爱恋</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>樱花树下</span>
+                                            <span class="mx-2">·</span>
+                                            <span><i class="fa fa-eye mr-1"></i> 1.5k</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.6</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">4</div>
+                                    <img src="图片\17.jpg" alt="历史谜团：失落的文明" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">历史谜团：失落的文明</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>历史侦探</span>
+                                            <span class="mx-2">·</span>
+                                            <span><i class="fa fa-eye mr-1"></i> 1.2k</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.5</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">5</div>
+                                    <img src="图片\33.jpg" alt="深海探秘" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">深海探秘</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>海底漫步者</span>
+                                            <span class="mx-2">·</span>
+                                            <span><i class="fa fa-eye mr-1"></i> 950</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.4</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 最新更新 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="bg-secondary p-4 text-white">
+                            <h3 class="font-bold text-lg">最新更新</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-secondary text-white rounded-full flex items-center justify-center font-bold mr-3">1</div>
+                                    <img src="图片\27.jpg" alt="机械之心" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">机械之心</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>未来探索者</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-green-500"><i class="fa fa-clock-o mr-1"></i> 1小时前</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.8</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-secondary/80 text-white rounded-full flex items-center justify-center font-bold mr-3">2</div>
+                                    <img src="图片\29.jpg" alt="第七个受害者" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">第七个受害者</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>暗夜追凶</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-green-500"><i class="fa fa-clock-o mr-1"></i> 3小时前</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.7</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-secondary/60 text-white rounded-full flex items-center justify-center font-bold mr-3">3</div>
+                                    <img src="图片\31.jpg" alt="贞观秘事" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">贞观秘事</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>历史探秘者</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-green-500"><i class="fa fa-clock-o mr-1"></i> 昨天</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.6</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">4</div>
+                                    <img src="图片\34.jpg" alt="雪国杀机" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">雪国杀机</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>冰原行者</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-green-500"><i class="fa fa-clock-o mr-1"></i> 昨天</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.5</div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">5</div>
+                                    <img src="图片\35.jpg" alt="江湖夜雨" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">江湖夜雨</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>武侠迷</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-green-500"><i class="fa fa-clock-o mr-1"></i> 2天前</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-accent font-bold">9.4</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 即将上架 -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="bg-accent p-4 text-white">
+                            <h3 class="font-bold text-lg">即将上架</h3>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center font-bold mr-3">1</div>
+                                    <img src="图片\36.jpg" alt="宇宙尽头的咖啡馆" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">宇宙尽头的咖啡馆</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>星际漫游者</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-blue-500">3天后</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-accent/80 text-white rounded-full flex items-center justify-center font-bold mr-3">2</div>
+                                    <img src="图片\37.jpg" alt="记忆碎片" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">记忆碎片</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>心灵捕手</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-blue-500">5天后</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-accent/60 text-white rounded-full flex items-center justify-center font-bold mr-3">3</div>
+                                    <img src="图片\38.jpg" alt="丝路秘宝" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">丝路秘宝</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>探险者</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-blue-500">1周后</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">4</div>
+                                    <img src="图片\39.jpg" alt="爱情方程式" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">爱情方程式</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>理性浪漫</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-blue-500">10天后</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-neutral-300 text-neutral-700 rounded-full flex items-center justify-center font-bold mr-3">5</div>
+                                    <img src="图片\40.jpg" alt="恐龙帝国" class="w-16 h-20 object-cover rounded mr-4">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium">恐龙帝国</h4>
+                                        <div class="flex items-center text-sm text-neutral-500 mt-1">
+                                            <span>古生物学家</span>
+                                            <span class="mx-2">·</span>
+                                            <span class="text-blue-500">2周后</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 相关作者 -->
+            <div>
+                <h2 class="text-2xl font-bold text-primary mb-6 flex items-center">
+                    <i class="fa fa-user-circle text-secondary mr-2"></i> 相关作者
+                </h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- 作者卡片 1 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scale-hover text-center p-4">
+                        <img src="图片\28.jpg" alt="未来探索者" class="w-24 h-24 rounded-full object-cover mx-auto mb-3">
+                        <h3 class="font-bold">未来探索者</h3>
+                        <p class="text-sm text-neutral-500 mb-2">科幻作家</p>
+                        <div class="flex justify-center items-center text-sm text-neutral-600 mb-3">
+                            <span><i class="fa fa-book mr-1"></i> 8部作品</span>
+                        </div>
+                        <button class="follow-author w-full px-4 py-1.5 border border-secondary text-secondary rounded-full text-sm hover:bg-secondary hover:text-white transition-colors" data-id="5">
+                            关注作者
+                        </button>
+                    </div>
+                    
+                    <!-- 作者卡片 2 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scale-hover text-center p-4">
+                        <img src="图片\30.jpg" alt="暗夜追凶" class="w-24 h-24 rounded-full object-cover mx-auto mb-3">
+                        <h3 class="font-bold">暗夜追凶</h3>
+                        <p class="text-sm text-neutral-500 mb-2">悬疑作家</p>
+                        <div class="flex justify-center items-center text-sm text-neutral-600 mb-3">
+                            <span><i class="fa fa-book mr-1"></i> 6部作品</span>
+                        </div>
+                        <button class="follow-author w-full px-4 py-1.5 border border-secondary text-secondary rounded-full text-sm hover:bg-secondary hover:text-white transition-colors" data-id="6">
+                            关注作者
+                        </button>
+                    </div>
+                    
+                    <!-- 作者卡片 3 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scale-hover text-center p-4">
+                        <img src="图片\32.jpg" alt="历史探秘者" class="w-24 h-24 rounded-full object-cover mx-auto mb-3">
+                        <h3 class="font-bold">历史探秘者</h3>
+                        <p class="text-sm text-neutral-500 mb-2">历史作家</p>
+                        <div class="flex justify-center items-center text-sm text-neutral-600 mb-3">
+                            <span><i class="fa fa-book mr-1"></i> 10部作品</span>
+                        </div>
+                        <button class="follow-author w-full px-4 py-1.5 border border-secondary text-secondary rounded-full text-sm hover:bg-secondary hover:text-white transition-colors" data-id="7">
+                            关注作者
+                        </button>
+                    </div>
+                    
+                    <!-- 作者卡片 4 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scale-hover text-center p-4">
+                        <img src="图片\41.jpg" alt="冰原行者" class="w-24 h-24 rounded-full object-cover mx-auto mb-3">
+                        <h3 class="font-bold">冰原行者</h3>
+                        <p class="text-sm text-neutral-500 mb-2">冒险作家</p>
+                        <div class="flex justify-center items-center text-sm text-neutral-600 mb-3">
+                            <span><i class="fa fa-book mr-1"></i> 5部作品</span>
+                        </div>
+                        <button class="follow-author w-full px-4 py-1.5 border border-secondary text-secondary rounded-full text-sm hover:bg-secondary hover:text-white transition-colors" data-id="8">
+                            关注作者
+                        </button>
+                    </div>
+                    
+                    <!-- 作者卡片 5 -->
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow scale-hover text-center p-4">
+                        <img src="图片\42.jpg" alt="武侠迷" class="w-24 h-24 rounded-full object-cover mx-auto mb-3">
+                        <h3 class="font-bold">武侠迷</h3>
+                        <p class="text-sm text-neutral-500 mb-2">武侠作家</p>
+                        <div class="flex justify-center items-center text-sm text-neutral-600 mb-3">
+                            <span><i class="fa fa-book mr-1"></i> 7部作品</span>
+                        </div>
+                        <button class="follow-author w-full px-4 py-1.5 border border-secondary text-secondary rounded-full text-sm hover:bg-secondary hover:text-white transition-colors" data-id="9">
+                            关注作者
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 订阅区域 -->
+    <section class="py-12 bg-primary text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">订阅我们的故事更新</h2>
+                <p class="mb-8 opacity-90">第一时间获取最新故事和独家内容，不错过任何精彩</p>
+                
+                <form id="subscription-form" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                    <input type="email" placeholder="输入您的邮箱地址" class="flex-1 px-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-white/50" id="subscription-email">
+                    <button type="submit" class="px-6 py-3 bg-white text-primary rounded-full font-medium hover:bg-neutral-100 transition-colors">
+                        订阅
+                    </button>
+                </form>
+                
+                <div id="subscription-success" class="hidden mt-4 text-green-300">
+                    <i class="fa fa-check-circle mr-2"></i> 订阅成功！我们会定期发送故事更新到您的邮箱
+                </div>
+            </div>
+        </div>
+    </section>
+     <!-- 登录/注册模态框 (默认隐藏) -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center modal hidden">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary" id="modal-title">登录</h3>
+                <button id="close-modal" class="text-neutral-400 hover:text-neutral-600">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="login-form-container">
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-neutral-700 mb-1">邮箱</label>
+                        <input type="email" id="login-email" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                        <input type="password" id="login-password" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="mr-2">
+                            <label for="remember-me" class="text-sm text-neutral-600">记住我</label>
+                        </div>
+                        <a href="#" class="text-sm text-secondary hover:text-secondary/80">忘记密码？</a>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">登录</button>
+                </form>
+                <div class="mt-4 text-center">
+                    <span class="text-sm text-neutral-600">还没有账号？</span>
+                    <button id="switch-to-register" class="text-sm text-secondary hover:text-secondary/80 ml-1">立即注册</button>
+                </div>
+            </div>
+            
+            <div id="register-form-container" class="hidden">
+                <form id="register-form" class="space-y-4">
+                    <div>
+                        <label for="register-username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                        <input type="text" id="register-username" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                    </div>
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-neutral-700 mb-1">邮箱</label>
+                        <input type="email" id="register-email" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                        <input type="password" id="register-password" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                    </div>
+                    <div>
+                        <label for="register-confirm-password" class="block text-sm font-medium text-neutral-700 mb-1">确认密码</label>
+                        <input type="password" id="register-confirm-password" class="w-full px-4 py-2 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请再次输入密码">
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                </form>
+                <div class="mt-4 text-center">
+                    <span class="text-sm text-neutral-600">已有账号？</span>
+                    <button id="switch-to-login" class="text-sm text-secondary hover:text-secondary/80 ml-1">立即登录</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 模拟数据 - 故事数据库
+        const stories = [
+            { id: 1, title: "星际迷航：无尽边疆", author: "银河旅行者", category: "科幻", image: "图片/8.jpg", views: 2400, rating: 4.8 },
+            { id: 2, title: "雨夜谋杀案", author: "黑猫警长", category: "悬疑", image: "图片/16.jpg", views: 1800, rating: 4.7 },
+            { id: 3, title: "穿越时空的爱恋", author: "樱花树下", category: "言情", image: "图片/5.jpg", views: 1500, rating: 4.9 },
+            { id: 4, title: "大明悬案录", author: "历史侦探", category: "历史", image: "图片/31.jpg", views: 1200, rating: 4.6 },
+            { id: 5, title: "深海探秘", author: "海底漫步者", category: "冒险", image: "图片/17.jpg", views: 950, rating: 4.5 },
+            { id: 6, title: "神秘的岛", author: "孤岛求生者", category: "冒险", image: "图片/40.jpg", views: 1100, rating: 4.7 },
+            { id: 7, title: "未来城市", author: "科技预言家", category: "科幻", image: "图片/26.jpg", views: 1350, rating: 4.4 },
+            { id: 8, title: "心灵密码", author: "心理学大师", category: "悬疑", image: "图片/39.jpg", views: 800, rating: 4.3 },
+            { id: 9, title: "爱在春天", author: "浪漫诗人", category: "言情", image: "图片/9.jpg", views: 1700, rating: 4.8 },
+            { id: 10, title: "三国奇谋", author: "历史学者", category: "历史", image: "图片/23.jpg", views: 1250, rating: 4.6 },
+        ];
+
+        // 模拟数据 - 作者数据库
+        const authors = [
+            { id: 1, name: "银河旅行者", avatar: "图片/28.jpg", genre: "科幻", works: 12, rating: 4.9 },
+            { id: 2, name: "黑猫警长", avatar: "图片/6.jpg", genre: "悬疑", works: 8, rating: 4.7 },
+            { id: 3, name: "樱花树下", avatar: "图片/5.jpg", genre: "言情", works: 15, rating: 4.8 },
+            { id: 4, name: "历史侦探", avatar: "图片/16.jpg", genre: "历史", works: 10, rating: 4.6 },
+        ];
+
+        // 模拟用户数据库（存储在localStorage中）
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化导航栏滚动效果
+            window.addEventListener('scroll', function() {
+                const navbar = document.getElementById('navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('py-2');
+                    navbar.classList.add('shadow-md');
+                } else {
+                    navbar.classList.remove('py-2');
+                    navbar.classList.remove('shadow-md');
+                }
+            });
+
+            // 初始化移动端菜单
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 初始化搜索功能
+            initSearch();
+
+            // 初始化登录/注册功能
+            initAuth();
+
+            // 初始化用户状态
+            updateUserStatus();
+
+            // 初始化书签功能
+            initBookmark();
+
+            // 初始化关注作者功能
+            initFollowAuthor();
+
+            // 初始化订阅功能
+            initSubscription();
+        });
+
+        // 搜索功能初始化
+        function initSearch() {
+           const searchToggle = document.getElementById('search-toggle');
+            const searchBar = document.getElementById('search-bar');
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            const resultsContainer = document.getElementById('results-container');
+
+            // 切换搜索框显示/隐藏
+            searchToggle.addEventListener('click', function(e) {
+        e.stopPropagation(); // 阻止事件冒泡
+        isSearchBarVisible = !searchBar.classList.toggle('hidden');
+        
+        if (isSearchBarVisible) {
+            searchInput.focus();
+        }
+    });
+
+            // 搜索输入处理
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim().toLowerCase();
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+
+                // 模拟搜索结果
+                const matchedStories = stories.filter(story => 
+                    story.title.toLowerCase().includes(query) || 
+                    story.author.toLowerCase().includes(query) ||
+                    story.category.toLowerCase().includes(query)
+                );
+
+                // 显示搜索结果
+                resultsContainer.innerHTML = '';
+                if (matchedStories.length > 0) {
+                    matchedStories.forEach(story => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'flex items-center p-2 hover:bg-neutral-100 rounded-lg transition-colors';
+                        resultItem.innerHTML = `
+                            <img src="${story.image}" alt="${story.title}" class="w-12 h-12 object-cover rounded mr-3">
+                            <div class="flex-1">
+                                <div class="font-medium">${story.title}</div>
+                                <div class="text-sm text-neutral-500">${story.author} · ${story.category}</div>
+                            </div>
+                            <span class="text-xs text-neutral-500">${story.rating} <i class="fa fa-star"></i></span>
+                        `;
+                        resultsContainer.appendChild(resultItem);
+                    });
+                    searchResults.classList.remove('hidden');
+                } else {
+                    resultsContainer.innerHTML = '<div class="text-center py-3 text-neutral-500">没有找到相关结果</div>';
+                    searchResults.classList.remove('hidden');
+                }
+            });
+
+            // 点击页面其他区域关闭搜索框
+            document.addEventListener('click', function(e) {
+               // 只有当搜索框可见且点击的不是搜索框内部元素时才关闭
+        if (isSearchBarVisible && !searchBar.contains(e.target)) {
+            searchBar.classList.add('hidden');
+            isSearchBarVisible = false;
+        }
+            });
+             // 点击搜索框内部时阻止事件冒泡
+    searchBar.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+        }
+
+        // 初始化登录/注册功能
+        function initAuth() {
+            const authModal = document.getElementById('auth-modal');
+            const loginBtn = document.getElementById('login-btn');
+            const registerBtn = document.getElementById('register-btn');
+            const mobileLoginBtn = document.getElementById('mobile-login-btn');
+            const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+            const closeModal = document.getElementById('close-modal');
+            const switchToRegister = document.getElementById('switch-to-register');
+            const switchToLogin = document.getElementById('switch-to-login');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const loginFormContainer = document.getElementById('login-form-container');
+            const registerFormContainer = document.getElementById('register-form-container');
+            const modalTitle = document.getElementById('modal-title');
+            const logoutBtn = document.getElementById('logout-btn');
+            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+
+            // 打开登录模态框
+            function openLoginModal() {
+                modalTitle.textContent = '登录';
+                loginFormContainer.classList.remove('hidden');
+                registerFormContainer.classList.add('hidden');
+                authModal.classList.remove('hidden');
+                // 添加模态框显示动画
+                setTimeout(() => {
+                    authModal.querySelector('div').classList.add('scale-100');
+                    authModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            }
+
+            // 打开注册模态框
+            function openRegisterModal() {
+                modalTitle.textContent = '注册';
+                loginFormContainer.classList.add('hidden');
+                registerFormContainer.classList.remove('hidden');
+                authModal.classList.remove('hidden');
+                // 添加模态框显示动画
+                setTimeout(() => {
+                    authModal.querySelector('div').classList.add('scale-100');
+                    authModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            }
+
+            // 关闭模态框
+            function closeModalFunc() {
+                authModal.querySelector('div').classList.remove('scale-100');
+                authModal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    authModal.classList.add('hidden');
+                }, 200);
+            }
+
+            // 绑定登录/注册按钮事件
+            loginBtn.addEventListener('click', openLoginModal);
+            registerBtn.addEventListener('click', openRegisterModal);
+            mobileLoginBtn.addEventListener('click', openLoginModal);
+            mobileRegisterBtn.addEventListener('click', openRegisterModal);
+            closeModal.addEventListener('click', closeModalFunc);
+            switchToRegister.addEventListener('click', openRegisterModal);
+            switchToLogin.addEventListener('click', openLoginModal);
+
+            // 点击模态框外部关闭
+            authModal.addEventListener('click', function(e) {
+                if (e.target === authModal) {
+                    closeModalFunc();
+                }
+            });
+
+            // 登录表单提交
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!email || !password) {
+                    alert('请输入邮箱和密码');
+                    return;
+                }
+
+                // 验证用户
+                if (users[email] && users[email].password === password) {
+                    currentUser = {
+                        email: email,
+                        username: users[email].username,
+                        avatar: users[email].avatar
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateUserStatus();
+                    closeModalFunc();
+                    alert('登录成功！');
+                } else {
+                    alert('邮箱或密码错误');
+                }
+            });
+
+            // 注册表单提交
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+
+                if (!username || !email || !password) {
+                    alert('请填写所有必填字段');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('两次输入的密码不一致');
+                    return;
+                }
+
+                // 检查邮箱是否已注册
+                if (users[email]) {
+                    alert('该邮箱已被注册');
+                    return;
+                }
+
+                // 创建新用户
+                users[email] = {
+                    username: username,
+                    password: password,
+                    avatar: `https://picsum.photos/200/200?user${Object.keys(users).length + 1}`,
+                    bookmarks: [],
+                    following: []
+                };
+
+                localStorage.setItem('users', JSON.stringify(users));
+
+                // 自动登录
+                currentUser = {
+                    email: email,
+                    username: username,
+                    avatar: users[email].avatar
+                };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                updateUserStatus();
+                closeModalFunc();
+                alert('注册成功！');
+            });
+
+            // 注销
+            logoutBtn.addEventListener('click', function() {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                updateUserStatus();
+            });
+
+            mobileLogoutBtn.addEventListener('click', function() {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                updateUserStatus();
+                mobileMenu.classList.add('hidden');
+            });
+        }
+
+        // 更新用户状态显示
+        function updateUserStatus() {
+            const loggedIn = document.getElementById('logged-in');
+            const loginRegister = document.getElementById('login-register');
+            const mobileLoggedIn = document.getElementById('mobile-logged-in');
+            const mobileLoginRegister = document.getElementById('mobile-login-register');
+            const usernameDisplay = document.getElementById('username-display');
+            const userAvatar = document.getElementById('user-avatar');
+            const mobileUsername = document.getElementById('mobile-username');
+            const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+
+            if (currentUser) {
+                // 用户已登录
+                loggedIn.classList.remove('hidden');
+                loginRegister.classList.add('hidden');
+                mobileLoggedIn.classList.remove('hidden');
+                mobileLoginRegister.classList.add('hidden');
+                
+                usernameDisplay.textContent = currentUser.username;
+                userAvatar.src = currentUser.avatar;
+                mobileUsername.textContent = currentUser.username;
+                mobileUserAvatar.src = currentUser.avatar;
+                
+                // 更新书签状态
+                updateBookmarkStatus();
+                
+                // 更新关注状态
+                updateFollowStatus();
+            } else {
+                // 用户未登录
+                loggedIn.classList.add('hidden');
+                loginRegister.classList.remove('hidden');
+                mobileLoggedIn.classList.add('hidden');
+                mobileLoginRegister.classList.remove('hidden');
+            }
+        }
+
+        // 初始化书签功能
+        function initBookmark() {
+            document.querySelectorAll('.add-to-bookmark').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!currentUser) {
+                        alert('请先登录');
+                        return;
+                    }
+                    
+                    const storyId = parseInt(this.getAttribute('data-id'));
+                    const isBookmarked = this.classList.contains('text-accent');
+                    
+                    if (isBookmarked) {
+                        // 移除书签
+                        users[currentUser.email].bookmarks = users[currentUser.email].bookmarks.filter(id => id !== storyId);
+                        this.classList.remove('text-accent');
+                        this.classList.add('text-secondary');
+                        this.innerHTML = '<i class="fa fa-bookmark-o"></i>';
+                        alert('已从书签中移除');
+                    } else {
+                        // 添加书签
+                        users[currentUser.email].bookmarks.push(storyId);
+                        this.classList.remove('text-secondary');
+                        this.classList.add('text-accent');
+                        this.innerHTML = '<i class="fa fa-bookmark"></i>';
+                        alert('已添加到书签');
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                });
+            });
+        }
+
+        // 更新书签状态
+        function updateBookmarkStatus() {
+            if (!currentUser) return;
+            
+            const userBookmarks = users[currentUser.email].bookmarks || [];
+            
+            document.querySelectorAll('.add-to-bookmark').forEach(button => {
+                const storyId = parseInt(button.getAttribute('data-id'));
+                
+                if (userBookmarks.includes(storyId)) {
+                    button.classList.remove('text-secondary');
+                    button.classList.add('text-accent');
+                    button.innerHTML = '<i class="fa fa-bookmark"></i>';
+                } else {
+                    button.classList.remove('text-accent');
+                    button.classList.add('text-secondary');
+                    button.innerHTML = '<i class="fa fa-bookmark-o"></i>';
+                }
+            });
+        }
+
+        // 初始化关注作者功能
+        function initFollowAuthor() {
+            document.querySelectorAll('.follow-author').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!currentUser) {
+                        alert('请先登录');
+                        return;
+                    }
+                    
+                    const authorId = parseInt(this.getAttribute('data-id'));
+                    const isFollowing = this.textContent.trim() === '已关注';
+                    
+                    if (isFollowing) {
+                        // 取消关注
+                        users[currentUser.email].following = users[currentUser.email].following.filter(id => id !== authorId);
+                        this.textContent = '关注作者';
+                        this.classList.remove('bg-secondary', 'text-white');
+                        this.classList.add('border', 'border-secondary', 'text-secondary');
+                        alert('已取消关注');
+                    } else {
+                        // 关注作者
+                        users[currentUser.email].following.push(authorId);
+                        this.textContent = '已关注';
+                        this.classList.remove('border', 'border-secondary', 'text-secondary');
+                        this.classList.add('bg-secondary', 'text-white');
+                        alert('已关注该作者');
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                });
+            });
+        }
+
+        // 更新关注状态
+        function updateFollowStatus() {
+            if (!currentUser) return;
+            
+            const userFollowing = users[currentUser.email].following || [];
+            
+            document.querySelectorAll('.follow-author').forEach(button => {
+                const authorId = parseInt(button.getAttribute('data-id'));
+                
+                if (userFollowing.includes(authorId)) {
+                    button.textContent = '已关注';
+                    button.classList.remove('border', 'border-secondary', 'text-secondary');
+                    button.classList.add('bg-secondary', 'text-white');
+                } else {
+                    button.textContent = '关注作者';
+                    button.classList.remove('bg-secondary', 'text-white');
+                    button.classList.add('border', 'border-secondary', 'text-secondary');
+                }
+            });
+        }
+
+        // 初始化订阅功能
+        function initSubscription() {
+            const subscriptionForm = document.getElementById('subscription-form');
+            const subscriptionEmail = document.getElementById('subscription-email');
+            const subscriptionSuccess = document.getElementById('subscription-success');
+            
+            subscriptionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = subscriptionEmail.value.trim();
+                
+                if (!email) {
+                    alert('请输入您的邮箱地址');
+                    return;
+                }
+                
+                // 模拟订阅成功
+                subscriptionEmail.value = '';
+                subscriptionSuccess.classList.remove('hidden');
+                
+                // 3秒后隐藏成功消息
+                setTimeout(() => {
+                    subscriptionSuccess.classList.add('hidden');
+                }, 3000);
+            });
+        }
+ </script>
+</body>
+</html>    
+    

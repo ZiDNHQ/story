@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事森林 - 发现好故事</title>
+    <script src="1.css"></script>
+    <link rel="stylesheet" href="2.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        accent: '#f39c12',
+                        neutral: {
+                            100: '#f5f5f5',
+                            200: '#e0e0e0',
+                            300: '#bbbbbb',
+                            400: '#999999',
+                            500: '#777777',
+                            600: '#555555',
+                            700: '#333333',
+                            800: '#222222',
+                            900: '#111111',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 15px rgba(0, 0, 0, 0.08)',
+                        'card-hover': '0 10px 25px rgba(0, 0, 0, 0.12)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/css">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+
+            .card-transition {
+                transition: all 0.3s ease-in-out;
+            }
+
+            .tag-hover {
+                transition: all 0.2s ease;
+            }
+
+            .scale-hover {
+                transition: transform 0.4s ease;
+            }
+
+            .scale-hover:hover {
+                transform: scale(1.03);
+            }
+
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .nav-link {
+                position: relative;
+            }
+
+            .nav-link::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -4px;
+                left: 0;
+                background-color: #3498db;
+                transition: width 0.3s ease;
+            }
+
+            .nav-link:hover::after {
+                width: 100%;
+            }
+
+            .hero-gradient {
+                background: linear-gradient(135deg, rgba(172, 181, 190, 0.9), rgba(52, 152, 219, 0.8));
+            }
+
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+            }
+
+            @keyframes skeleton-loading {
+                0% {
+                    background-position: 200% 0;
+                }
+
+                100% {
+                    background-position: -200% 0;
+                }
+            }
+
+            .modal {
+                backdrop-filter: blur(4px);
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+            
+            /* 粒子背景覆盖层 */
+            .overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(to bottom, rgba(18, 18, 18, 0.8), rgba(18, 18, 18, 0.95));
+            }
+            
+            /* 深色模式适配 */
+            .dark-bg {
+                background-color: #121212;
+                color: #f0f0f0;
+            }
+            
+            .glass-card {
+                backdrop-filter: blur(0.001px);
+                background-color: rgba(30, 30, 30, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            /* 音乐播放器样式 */
+            .music-player {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
+                background: rgba(30, 30, 30, 0.9);
+                backdrop-filter: blur(10px);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                z-index: 100;
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+                transform: translateY(0);
+                transition: transform 0.3s ease;
+            }
+            
+            .music-player.hidden {
+                transform: translateY(100%);
+            }
+            
+            .music-toggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: rgba(52, 152, 219, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                cursor: pointer;
+                z-index: 101;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            }
+            
+            .progress-container {
+                flex: 1;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 2px;
+                cursor: pointer;
+                position: relative;
+                margin: 0 15px;
+            }
+            
+            .progress-bar {
+                height: 100%;
+                background: #3498db;
+                border-radius: 2px;
+                width: 0%;
+            }
+            
+            .volume-container {
+                width: 100px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .volume-slider {
+                width: 100%;
+                -webkit-appearance: none;
+                height: 4px;
+                border-radius: 2px;
+                background: rgba(255, 255, 255, 0.1);
+                outline: none;
+            }
+            
+            .volume-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #3498db;
+                cursor: pointer;
+            }
+            
+            .music-info {
+                display: flex;
+                align-items: center;
+                min-width: 200px;
+            }
+            
+            .music-thumb {
+                width: 50px;
+                height: 50px;
+                border-radius: 5px;
+                margin-right: 15px;
+                background-size: cover;
+            }
+            
+            .music-title {
+                font-size: 14px;
+                color: white;
+                margin-bottom: 4px;
+            }
+            
+            .music-artist {
+                font-size: 12px;
+                color: rgba(255, 255, 255, 0.7);
+            }
+            
+            .playlist-container {
+                position: absolute;
+                bottom: 80px;
+                left: 0;
+                right: 0;
+                background: rgba(20, 20, 20, 0.95);
+                max-height: 300px;
+                overflow-y: auto;
+                padding: 15px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                display: none;
+            }
+            
+            .playlist-container.show {
+                display: block;
+            }
+            
+            .playlist-title {
+                color: white;
+                font-size: 16px;
+                margin-bottom: 15px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .playlist-item {
+                padding: 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                background: rgba(255, 255, 255, 0.05);
+            }
+            
+            .playlist-item:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .playlist-item.active {
+                background: rgba(52, 152, 219, 0.2);
+            }
+            
+            .playlist-thumb {
+                width: 40px;
+                height: 40px;
+                border-radius: 4px;
+                margin-right: 10px;
+                background-size: cover;
+            }
+           
+        }
+          /* 关键图标样式 */
+        .fa:before { content: ""; display: inline-block; font-style: normal; font-variant: normal; text-rendering: auto; }
+        .fa-book-open:before { content: "📖"; }
+        .fa-search:before { content: "🔍"; }
+        .fa-bars:before { content: "☰"; }
+        .fa-eye:before { content: "👁️"; }
+        .fa-star:before { content: "⭐"; }
+        .fa-bookmark:before { content: "🔖"; }
+        .fa-bookmark-o:before { content: "🗳️"; }
+        .fa-arrow-right:before { content: "→"; }
+        .fa-times:before { content: "✕"; }
+        .fa-music:before { content: "♫"; }
+        .fa-play:before { content: "▶"; }
+        .fa-pause:before { content: "⏸"; }
+        .fa-step-backward:before { content: "⏮"; }
+        .fa-step-forward:before { content: "⏭"; }
+        .fa-volume-up:before { content: "🔊"; }
+         .fa-list:before { content: "☰"; }
+    </style>
+</head>
+
+<body class="font-inter bg-neutral-900 text-white">
+    <!-- 粒子背景Canvas -->
+    <canvas id="particleCanvas" class="fixed top-0 left-0 w-full h-full z-0"></canvas>
+    
+    <!-- 导航栏 -->
+    <header class="fixed w-full bg-neutral-800/80 backdrop-blur-sm shadow-sm z-50 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="#" class="flex items-center space-x-2">
+                <span class="text-2xl text-primary"><i class="fa fa-book-open"></i></span>
+                <span class="text-xl font-bold text-primary">故事森林</span>
+            </a>
+
+            <!-- 桌面导航 -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#home" class="nav-link text-neutral-200 hover:text-secondary transition-colors">首页</a>
+                <a href="#recommend" class="nav-link text-neutral-200 hover:text-secondary transition-colors">推荐</a>
+                <a href="#categories" class="nav-link text-neutral-200 hover:text-secondary transition-colors">分类</a>
+                <a href="#authors" class="nav-link text-neutral-200 hover:text-secondary transition-colors">作者</a>
+            </nav>
+
+            <!-- 用户区域 -->
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-neutral-700 transition-colors" id="search-toggle">
+                    <i class="fa fa-search text-neutral-200"></i>
+                </button>
+
+                <div id="user-menu" class="hidden md:flex items-center space-x-3">
+                    <div id="logged-in" class="hidden items-center space-x-2">
+                        <img id="user-avatar" src="图片\12.jpg" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                        <span id="username-display" class="text-sm font-medium"></span>
+                        <button id="logout-btn" class="text-xs text-neutral-400 hover:text-neutral-200">注销</button>
+                    </div>
+                    <div id="login-register" class="flex items-center space-x-2">
+                        <button id="login-btn" class="px-3 py-1 text-sm text-secondary border border-secondary rounded-full hover:bg-secondary/5 transition-colors">登录</button>
+                        <button id="register-btn" class="px-3 py-1 text-sm bg-secondary text-white rounded-full hover:bg-secondary/90 transition-colors">注册</button>
+                    </div>
+                </div>
+
+                <!-- 移动端菜单按钮 -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-full hover:bg-neutral-700 transition-colors">
+                    <i class="fa fa-bars text-neutral-200"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 搜索框 (默认隐藏) -->
+        <div id="search-bar" class="hidden bg-neutral-800 border-t border-neutral-700 py-3 px-4">
+            <div class="container mx-auto">
+                <div class="relative">
+                    <input type="text" placeholder="搜索故事、作者或标签..." class="w-full pl-10 pr-4 py-2 rounded-full bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" id="search-input">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+                <div id="search-results" class="mt-3 hidden">
+                    <div class="text-sm text-neutral-400 mb-2">搜索结果：</div>
+                    <div id="results-container" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 移动端菜单 (默认隐藏) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-neutral-800 border-t border-neutral-700">
+            <div class="container mx-auto px-4 py-3">
+                <nav class="flex flex-col space-y-3">
+                    <a href="#home" class="py-2 px-4 hover:bg-neutral-700 rounded-lg transition-colors">首页</a>
+                    <a href="#recommend" class="py-2 px-4 hover:bg-neutral-700 rounded-lg transition-colors">推荐</a>
+                    <a href="#categories" class="py-2 px-4 hover:bg-neutral-700 rounded-lg transition-colors">分类</a>
+                    <a href="#authors" class="py-2 px-4 hover:bg-neutral-700 rounded-lg transition-colors">作者</a>
+                    <div class="pt-2 border-t border-neutral-700">
+                        <div id="mobile-logged-in" class="hidden flex items-center space-x-3 py-2">
+                            <img id="mobile-user-avatar" src="图片\12.jpg" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                            <span id="mobile-username" class="text-sm font-medium"></span>
+                            <button id="mobile-logout-btn" class="text-xs text-neutral-400 hover:text-neutral-200">注销</button>
+                        </div>
+                        <div id="mobile-login-register" class="flex space-x-2 pt-2">
+                            <button id="mobile-login-btn" class="flex-1 px-3 py-2 text-sm text-secondary border border-secondary rounded-lg hover:bg-secondary/5 transition-colors">登录</button>
+                            <button id="mobile-register-btn" class="flex-1 px-3 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="pt-16">
+        <!-- 英雄区域 -->
+        <section id="home" class="relative h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 z-0">
+                <img src="图片\主.jpg" alt="故事森林" class="w-full h-full object-cover scale-hover">
+                <div class="absolute inset-0 hero-gradient"></div>
+            </div>
+            <div class="container mx-auto px-4 z-10 text-center">
+                <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white text-shadow mb-4 fade-in">
+                    探索无限故事世界
+                </h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] text-white/90 max-w-2xl mx-auto mb-8 fade-in" style="animation-delay: 0.2s">
+                    发现全球好故事，从科幻到历史，从悬疑到浪漫，总有一本打动你
+                </p>
+            </div>
+        </section>
+
+        <!-- 热门推荐 -->
+        <section id="recommend" class="py-16 glass-card">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-primary mb-2">热门推荐</h2>
+                        <p class="text-neutral-400">根据读者喜爱度精选的故事</p>
+                    </div>
+                    <a href="3网站推荐页.html" class="hidden md:flex items-center text-secondary hover:text-secondary/80 transition-colors">
+                        查看全部 <i class="fa fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- 故事卡片 1 -->
+                    <div class="story-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover cursor-pointer" data-id="1">
+                        <div class="relative">
+                            <img src="图片\2.jpg" alt="星际迷航" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
+                                热门
+                            </div>
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center text-sm text-neutral-400 mb-2">
+                                <span class="mr-3"><i class="fa fa-eye mr-1"></i> 2.4k</span>
+                                <span><i class="fa fa-star mr-1"></i> 4.8</span>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2 text-white">星际迷航：无尽边疆</h3>
+                            <p class="text-neutral-400 text-sm mb-4 line-clamp-3">在23世纪，星际舰队探索未知星系，遇到了前所未有的外星文明...</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">科幻</span>
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">冒险</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\3.jpg" alt="作者头像" class="w-7 h-7 rounded-full object-cover">
+                                    <span class="ml-2 text-sm text-neutral-300">银河旅行者</span>
+                                </div>
+                                <button class="text-secondary hover:text-secondary/80 transition-colors add-to-bookmark" data-id="1">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                                <a href="story-2.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 故事卡片 2 -->
+                    <div class="story-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover cursor-pointer" data-id="2">
+                        <div class="relative">
+                            <img src="图片\4.jpg" alt="神秘案件" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center text-sm text-neutral-400 mb-2">
+                                <span class="mr-3"><i class="fa fa-eye mr-1"></i> 1.8k</span>
+                                <span><i class="fa fa-star mr-1"></i> 4.7</span>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2 text-white">神秘案件：暗夜追踪</h3>
+                            <p class="text-neutral-400 text-sm mb-4 line-clamp-3">侦探杰克在一个黑暗的夜晚接到了一起离奇的谋杀案...</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">悬疑</span>
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">推理</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\6.jpg" alt="作者头像" class="w-7 h-7 rounded-full object-cover">
+                                    <span class="ml-2 text-sm text-neutral-300">黑猫警长</span>
+                                </div>
+                                <button class="text-secondary hover:text-secondary/80 transition-colors add-to-bookmark" data-id="2">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                                 <a href="story-3.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 故事卡片 3 -->
+                    <div class="story-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover cursor-pointer" data-id="3">
+                        <div class="relative">
+                            <img src="图片\13.jpg" alt="穿越时空的爱恋" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center text-sm text-neutral-400 mb-2">
+                                <span class="mr-3"><i class="fa fa-eye mr-1"></i> 1.5k</span>
+                                <span><i class="fa fa-star mr-1"></i> 4.9</span>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2 text-white">穿越时空的爱恋</h3>
+                            <p class="text-neutral-400 text-sm mb-4 line-clamp-3">考古学家林小雨意外发现一枚神秘戒指，每次戴上都会穿越到古代...</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">言情</span>
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">奇幻</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\5.jpg" alt="作者头像" class="w-7 h-7 rounded-full object-cover">
+                                    <span class="ml-2 text-sm text-neutral-300">樱花树下</span>
+                                </div>
+                                <button class="text-secondary hover:text-secondary/80 transition-colors add-to-bookmark" data-id="3">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                                 <a href="story-4.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 故事卡片 4 -->
+                    <div class="story-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition scale-hover cursor-pointer" data-id="4">
+                        <div class="relative">
+                            <img src="图片\17.jpg" alt="历史谜团" class="w-full h-48 object-cover">
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center text-sm text-neutral-400 mb-2">
+                                <span class="mr-3"><i class="fa fa-eye mr-1"></i> 1.2k</span>
+                                <span><i class="fa fa-star mr-1"></i> 4.6</span>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2 text-white">历史谜团：失落的文明</h3>
+                            <p class="text-neutral-400 text-sm mb-4 line-clamp-3">历史学家艾米丽发现了一个古老的遗址，揭开了一段被遗忘的历史...</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">历史</span>
+                                <span class="text-xs px-2 py-1 bg-secondary/20 text-secondary rounded-full">悬疑</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <img src="图片\16.jpg" alt="作者头像" class="w-7 h-7 rounded-full object-cover">
+                                    <span class="ml-2 text-sm text-neutral-300">历史侦探</span>
+                                </div>
+                                <button class="text-secondary hover:text-secondary/80 transition-colors add-to-bookmark" data-id="4">
+                                    <i class="fa fa-bookmark-o"></i>
+                                </button>
+                                 <a href="story-5.html" class="read-story text-secondary hover:text-secondary/80 text-sm font-medium" data-id="13">阅读全文</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center md:hidden">
+                    <a href="3网站推荐页.html" class="inline-flex items-center text-secondary hover:text-secondary/80 transition-colors">
+                        查看全部 <i class="fa fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 分类浏览 -->
+        <section id="categories" class="py-16 glass-card">
+            <div class="container mx-auto px-4">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-primary mb-2 text-center">浏览分类</h2>
+                <p class="text-neutral-400 text-center max-w-2xl mx-auto mb-12">
+                    探索不同类型的故事，找到你感兴趣的内容
+                </p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <!-- 分类卡片 1 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\8.jpg" alt="科幻" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">科幻</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">124 个故事</span>
+                        </div>
+                    </a>
+
+                    <!-- 分类卡片 2 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\7.jpg" alt="悬疑" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">悬疑</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">80 个故事</span>
+                        </div>
+                    </a>
+
+                    <!-- 分类卡片 3 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\9.jpg" alt="言情" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">言情</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">100 个故事</span>
+                        </div>
+                    </a>
+
+                    <!-- 分类卡片 4 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\18.jpg" alt="历史" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">历史</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">90 个故事</span>
+                        </div>
+                    </a>
+
+                    <!-- 分类卡片 5 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\22.jpg" alt="冒险" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">冒险</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">70 个故事</span>
+                        </div>
+                    </a>
+
+                    <!-- 分类卡片 6 -->
+                    <a href="2网站分类页.html" class="category-card glass-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="h-32 relative overflow-hidden">
+                            <img src="图片\26.jpg" alt="奇幻" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                            <h3 class="absolute bottom-3 left-3 text-white font-bold text-lg">奇幻</h3>
+                        </div>
+                        <div class="p-3 text-center">
+                            <span class="text-sm text-neutral-400">110 个故事</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 作者列表 -->
+        <section id="authors" class="py-16 glass-card">
+            <div class="container mx-auto px-4">
+                <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-primary mb-8 text-center">热门作者</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- 作者卡片 1 -->
+                    <div class="author-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition p-5 flex flex-col items-center text-center">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-4">
+                            <img src="图片\3.jpg" alt="银河旅行者" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-lg font-bold mb-1 text-white">银河旅行者</h3>
+                        <p class="text-secondary text-sm mb-3">科幻作家</p>
+                        <p class="text-neutral-400 text-sm mb-4">擅长创作星际冒险故事，充满想象力</p>
+                        <div class="flex justify-center gap-3 mb-4">
+                            <span class="text-xs px-2 py-1 bg-secondary/10 text-secondary rounded-full">12 部作品</span>
+                            <span class="text-xs px-2 py-1 bg-accent/10 text-accent rounded-full">4.9 平均分</span>
+                        </div>
+                        <button class="w-full py-2 border border-secondary text-secondary rounded-lg hover:bg-secondary hover:text-white transition-colors follow-author" data-id="1">
+                            关注作者
+                        </button>
+                    </div>
+
+                    <!-- 作者卡片 2 -->
+                    <div class="author-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition p-5 flex flex-col items-center text-center">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-4">
+                            <img src="图片\6.jpg" alt="黑猫警长" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-lg font-bold mb-1 text-white">黑猫警长</h3>
+                        <p class="text-secondary text-sm mb-3">悬疑作家</p>
+                        <p class="text-neutral-400 text-sm mb-4">以巧妙的情节和悬念吸引读者</p>
+                        <div class="flex justify-center gap-3 mb-4">
+                            <span class="text-xs px-2 py-1 bg-secondary/10 text-secondary rounded-full">8 部作品</span>
+                            <span class="text-xs px-2 py-1 bg-accent/10 text-accent rounded-full">4.7 平均分</span>
+                        </div>
+                        <button class="w-full py-2 border border-secondary text-secondary rounded-lg hover:bg-secondary hover:text-white transition-colors follow-author" data-id="2">
+                            关注作者
+                        </button>
+                    </div>
+
+                    <!-- 作者卡片 3 -->
+                    <div class="author-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition p-5 flex flex-col items-center text-center">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-4">
+                            <img src="图片\5.jpg" alt="樱花树下" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-lg font-bold mb-1 text-white">樱花树下</h3>
+                        <p class="text-secondary text-sm mb-3">言情作家</p>
+                        <p class="text-neutral-400 text-sm mb-4">擅长将浪漫爱情与奇幻元素结合，作品风格细腻动人</p>
+                        <div class="flex justify-center gap-3 mb-4">
+                            <span class="text-xs px-2 py-1 bg-secondary/10 text-secondary rounded-full">15 部作品</span>
+                            <span class="text-xs px-2 py-1 bg-accent/10 text-accent rounded-full">4.8 平均分</span>
+                        </div>
+                        <button class="w-full py-2 border border-secondary text-secondary rounded-lg hover:bg-secondary hover:text-white transition-colors follow-author" data-id="3">
+                            关注作者
+                        </button>
+                    </div>
+
+                    <!-- 作者卡片 4 -->
+                    <div class="author-card glass-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover card-transition p-5 flex flex-col items-center text-center">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md mb-4">
+                            <img src="图片\16.jpg" alt="历史侦探" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-lg font-bold mb-1 text-white">历史侦探</h3>
+                        <p class="text-secondary text-sm mb-3">历史悬疑作家</p>
+                        <p class="text-neutral-400 text-sm mb-4">对历史细节有深入研究，擅长将真实历史与悬疑故事融合</p>
+                        <div class="flex justify-center gap-3 mb-4">
+                            <span class="text-xs px-2 py-1 bg-secondary/10 text-secondary rounded-full">10 部作品</span>
+                            <span class="text-xs px-2 py-1 bg-accent/10 text-accent rounded-full">4.6 平均分</span>
+                        </div>
+                        <button class="w-full py-2 border border-secondary text-secondary rounded-lg hover:bg-secondary hover:text-white transition-colors follow-author" data-id="4">
+                            关注作者
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- 订阅区域 -->
+        <section class="py-16 bg-primary text-white">
+            <div class="container mx-auto px-4">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-4">订阅故事推送</h2>
+                    <p class="text-white/80 mb-8">
+                        获取最新故事更新和专属优惠，每周精选内容直接发送到您的邮箱
+                    </p>
+                    <form class="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
+                        <input type="email" placeholder="输入您的邮箱地址" class="flex-1 px-4 py-3 rounded-lg text-neutral-800 focus:outline-none focus:ring-2 focus:ring-accent">
+                        <button type="submit" class="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors shadow-lg hover:shadow-xl">
+                            立即订阅
+                     </button>
+                     </form>
+                     </div>
+                     </div>
+                 </section>
+
+    <!-- 登录/注册模态框 (默认隐藏) -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center modal hidden">
+        <div class="bg-neutral-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary" id="modal-title">登录</h3>
+                <button id="close-modal" class="text-neutral-400 hover:text-neutral-200">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="login-form-container">
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-neutral-300 mb-1">邮箱</label>
+                        <input type="email" id="login-email" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-neutral-300 mb-1">密码</label>
+                        <input type="password" id="login-password" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="mr-2">
+                            <label for="remember-me" class="text-sm text-neutral-400">记住我</label>
+                        </div>
+                        <a href="#" class="text-sm text-secondary hover:text-secondary/80">忘记密码？</a>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">登录</button>
+                </form>
+                <div class="mt-4 text-center">
+                    <span class="text-sm text-neutral-400">还没有账号？</span>
+                    <button id="switch-to-register" class="text-sm text-secondary hover:text-secondary/80 ml-1">立即注册</button>
+                </div>
+            </div>
+            
+            <div id="register-form-container" class="hidden">
+                <form id="register-form" class="space-y-4">
+                    <div>
+                        <label for="register-username" class="block text-sm font-medium text-neutral-300 mb-1">用户名</label>
+                        <input type="text" id="register-username" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入用户名">
+                    </div>
+                    <div>
+                        <label for="register-email" class="block text-sm font-medium text-neutral-300 mb-1">邮箱</label>
+                        <input type="email" id="register-email" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入邮箱">
+                    </div>
+                    <div>
+                        <label for="register-password" class="block text-sm font-medium text-neutral-300 mb-1">密码</label>
+                        <input type="password" id="register-password" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请输入密码">
+                    </div>
+                    <div>
+                        <label for="register-confirm-password" class="block text-sm font-medium text-neutral-300 mb-1">确认密码</label>
+                        <input type="password" id="register-confirm-password" class="w-full px-4 py-2 rounded-lg bg-neutral-700 border border-neutral-600 text-white focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary" placeholder="请再次输入密码">
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">注册</button>
+                </form>
+                <div class="mt-4 text-center">
+                    <span class="text-sm text-neutral-400">已有账号？</span>
+                    <button id="switch-to-login" class="text-sm text-secondary hover:text-secondary/80 ml-1">立即登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="relative z-10 py-10 border-t border-white/10 glass-card">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="text-xl font-bold tracking-wider">
+                        <span class="text-primary">故事</span><span class="text-white">森林</span>
+                    </div>
+                    <p class="text-neutral-400 mt-2">探索故事的奥秘</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 音乐播放器 -->
+    <div id="music-player" class="music-player hidden">
+        <div class="music-info">
+            <div class="music-thumb" id="music-thumb"></div>
+        </div>
+        
+        <div class="flex items-center flex-1">
+            <button id="prev-btn" class="p-2 text-white hover:text-secondary">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button id="play-pause-btn" class="p-2 text-white hover:text-secondary mx-2">
+                <i class="fas fa-play" id="play-icon"></i>
+            </button>
+            <button id="next-btn" class="p-2 text-white hover:text-secondary">
+                <i class="fas fa-step-forward"></i>
+            </button>
+            
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="flex items-center ml-4">
+                <button id="playlist-toggle" class="p-2 text-white hover:text-secondary mr-2">
+                    <i class="fas fa-list"></i>
+                </button>
+                <i class="fas fa-volume-up text-white mr-2"></i>
+                <div class="volume-container">
+                    <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider" id="volume-slider">
+                </div>
+            </div>
+        </div>
+        
+        <div class="playlist-container" id="playlist-container">
+            <div class="playlist-title">
+                <span>播放列表</span>
+                <button id="close-playlist" class="text-neutral-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="playlist"></div>
+        </div>
+    </div>
+    
+    <div id="music-toggle" class="music-toggle">
+        <i class="fas fa-music"></i>
+    </div>
+
+    <script>
+        // Canvas粒子系统
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let particleCount = 100;
+        let mouse = { x: null, y: null, radius: 150 };
+        
+        // 设置Canvas尺寸
+        function setupCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        
+        // 粒子类
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2 + 1;
+                this.baseSize = this.size;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                
+                // 随机选择颜色方案中的一种颜色
+                const colors = [
+                    'rgba(44, 62, 80, ', // primary
+                    'rgba(52, 152, 219, ', // secondary
+                    'rgba(243, 156, 18, ' // accent
+                ];
+                const selectedColor = colors[Math.floor(Math.random() * colors.length)];
+                this.color = selectedColor + (Math.random() * 0.6 + 0.4) + ')';
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                // 边界检测
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+                
+                // 鼠标交互
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    // 粒子远离鼠标
+                    const pushX = dx / (distance * 2);
+                    const pushY = dy / (distance * 2);
+                    this.x -= pushX;
+                    this.y -= pushY;
+                    
+                    // 鼠标附近的粒子变大
+                    if (this.size < 5) this.size += 0.1;
+                } else if (this.size > this.baseSize) {
+                    // 恢复原始大小
+                    this.size -= 0.1;
+                    if (this.size < this.baseSize) this.size = this.baseSize;
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // 初始化粒子
+        function init() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        // 绘制连线
+        function drawConnections() {
+            const maxDistance = 100;
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x;
+                    const dy = particles[a].y - particles[b].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < maxDistance) {
+                        // 根据距离调整线的透明度
+                        const opacity = 1 - (distance / maxDistance);
+                        
+                        // 根据粒子颜色决定连线颜色
+                        const colorA = particles[a].color;
+                        const colorB = particles[b].color;
+                        
+                        // 简化处理，使用第一个粒子的颜色
+                        const baseColor = colorA.substring(5, colorA.length - 2);
+                        ctx.strokeStyle = `rgba(${baseColor}, ${opacity * 0.3})`;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+        
+        // 动画循环
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            
+            drawConnections();
+            requestAnimationFrame(animate);
+        }
+        
+        // 鼠标移动事件
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        
+        // 窗口大小变化事件
+        window.addEventListener('resize', () => {
+            setupCanvas();
+            init(); // 重新初始化粒子以适应新尺寸
+        });
+        
+        // 初始化
+        setupCanvas();
+        init();
+        animate();
+        
+        // 滚动时改变导航栏样式
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('py-2');
+                nav.classList.remove('py-3');
+                nav.classList.add('shadow-lg');
+            } else {
+                nav.classList.add('py-3');
+                nav.classList.remove('py-2');
+                nav.classList.remove('shadow-lg');
+            }
+        });
+
+        // 模拟数据 - 故事数据库
+        const stories = [
+            { id: 1, title: "星际迷航：无尽边疆", author: "银河旅行者", category: "科幻", image: "图片/1.jpg", views: 2400, rating: 4.8 },
+            { id: 2, title: "雨夜谋杀案", author: "黑猫警长", category: "悬疑", image: "图片/43.jpg", views: 1800, rating: 4.7 },
+            { id: 3, title: "穿越时空的爱恋", author: "樱花树下", category: "言情", image: "图片/3.jpg", views: 1500, rating: 4.9 },
+            { id: 4, title: "大明悬案录", author: "历史侦探", category: "历史", image: "图片/4.jpg", views: 1200, rating: 4.6 },
+            { id: 5, title: "深海探秘", author: "海底漫步者", category: "冒险", image: "图片/5.jpg", views: 950, rating: 4.5 },
+            { id: 6, title: "神秘的岛", author: "孤岛求生者", category: "冒险", image: "图片/6.jpg", views: 1100, rating: 4.7 },
+            { id: 7, title: "未来城市", author: "科技预言家", category: "科幻", image: "图片/7.jpg", views: 1350, rating: 4.4 },
+            { id: 8, title: "心灵密码", author: "心理学大师", category: "悬疑", image: "图片/8.jpg", views: 800, rating: 4.3 },
+            { id: 9, title: "爱在春天", author: "浪漫诗人", category: "言情", image: "图片/9.jpg", views: 1700, rating: 4.8 },
+            { id: 10, title: "三国奇谋", author: "历史学者", category: "历史", image: "图片/10.jpg", views: 1250, rating: 4.6 },
+        ];
+
+        // 模拟数据 - 作者数据库
+        const authors = [
+            { id: 1, name: "银河旅行者", avatar: "图片/13.jpg", genre: "科幻", works: 12, rating: 4.9 },
+            { id: 2, name: "黑猫警长", avatar: "图片/14.jpg", genre: "悬疑", works: 8, rating: 4.7 },
+            { id: 3, name: "樱花树下", avatar: "图片/15.jpg", genre: "言情", works: 15, rating: 4.8 },
+            { id: 4, name: "历史侦探", avatar: "图片/16.jpg", genre: "历史", works: 10, rating: 4.6 },
+        ];
+
+        // 模拟用户数据库（存储在localStorage中）
+        let users = JSON.parse(localStorage.getItem('users')) || {};
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+
+        // 背景音乐功能
+        const musicPlayer = document.getElementById('music-player');
+        const musicToggle = document.getElementById('music-toggle');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const volumeSlider = document.getElementById('volume-slider');
+        const playlistToggle = document.getElementById('playlist-toggle');
+        const closePlaylist = document.getElementById('close-playlist');
+        const playlistContainer = document.getElementById('playlist-container');
+        const playlist = document.getElementById('playlist');
+        const musicTitle = document.getElementById('music-title');
+        const musicArtist = document.getElementById('music-artist');
+        const musicThumb = document.getElementById('music-thumb');
+        
+        // 音乐库
+        const musicLibrary = [
+             {
+                title: "古风",
+                artist: "活泼",
+                src: "bgm2.mp3",
+                thumb: "图片/20.jpg"
+            },
+            {
+                title: "宁静的森林",
+                artist: "自然之声",
+                src: "bgm1.mp3",
+                thumb: "图片/11.jpg"
+            }
+        ];
+        
+        // 创建音频对象
+        const audio = new Audio();
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        
+        // 初始化播放列表
+        function initPlaylist() {
+            playlist.innerHTML = '';
+            musicLibrary.forEach((track, index) => {
+                const playlistItem = document.createElement('div');
+                playlistItem.className = 'playlist-item';
+                if (index === currentTrackIndex) {
+                    playlistItem.classList.add('active');
+                }
+                playlistItem.innerHTML = `
+                    <div class="playlist-thumb" style="background-image: url(${track.thumb})"></div>
+                    <div>
+                        <div class="music-title">${track.title}</div>
+                        <div class="music-artist">${track.artist}</div>
+                    </div>
+                `;
+                playlistItem.addEventListener('click', () => {
+                    playTrack(index);
+                });
+                playlist.appendChild(playlistItem);
+            });
+        }
+        
+        // 播放指定曲目
+        function playTrack(index) {
+            currentTrackIndex = index;
+            const track = musicLibrary[currentTrackIndex];
+            
+            audio.src = track.src;
+            audio.play()
+                .then(() => {
+                    isPlaying = true;
+                    playIcon.className = 'fas fa-pause';
+                    updateTrackInfo();
+                    updateActivePlaylistItem();
+                })
+                .catch(e => console.log('播放失败:', e));
+        }
+        
+        // 更新曲目信息
+        function updateTrackInfo() {
+            const track = musicLibrary[currentTrackIndex];
+            musicTitle.textContent = track.title;
+            musicArtist.textContent = track.artist;
+            musicThumb.style.backgroundImage = `url(${track.thumb})`;
+        }
+        
+        // 更新播放列表活动项
+        function updateActivePlaylistItem() {
+            const items = document.querySelectorAll('.playlist-item');
+            items.forEach((item, index) => {
+                if (index === currentTrackIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        // 切换播放状态
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                playIcon.className = 'fas fa-play';
+            } else {
+                audio.play()
+                    .then(() => {
+                        playIcon.className = 'fas fa-pause';
+                    })
+                    .catch(e => console.log('播放失败:', e));
+            }
+            isPlaying = !isPlaying;
+        }
+        
+        // 上一曲
+        function prevTrack() {
+            currentTrackIndex--;
+            if (currentTrackIndex < 0) {
+                currentTrackIndex = musicLibrary.length - 1;
+            }
+            playTrack(currentTrackIndex);
+        }
+        
+        // 下一曲
+        function nextTrack() {
+            currentTrackIndex++;
+            if (currentTrackIndex >= musicLibrary.length) {
+                currentTrackIndex = 0;
+            }
+            playTrack(currentTrackIndex);
+        }
+        
+        // 更新进度条
+        function updateProgress(e) {
+            const { duration, currentTime } = e.srcElement;
+            const progressPercent = (currentTime / duration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+        
+        // 设置进度条
+        function setProgress(e) {
+            const width = this.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audio.duration;
+            
+            audio.currentTime = (clickX / width) * duration;
+        }
+        
+        // 设置音量
+        function setVolume() {
+            audio.volume = volumeSlider.value;
+            localStorage.setItem('musicVolume', volumeSlider.value);
+        }
+        
+        // 初始化音乐播放器
+        function initMusicPlayer() {
+            // 从localStorage加载用户偏好
+            const savedVolume = localStorage.getItem('musicVolume');
+            if (savedVolume !== null) {
+                audio.volume = parseFloat(savedVolume);
+                volumeSlider.value = savedVolume;
+            } else {
+                audio.volume = 0.5;
+            }
+            
+            // 初始化播放列表
+            initPlaylist();
+            
+            // 事件监听器
+            playPauseBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', prevTrack);
+            nextBtn.addEventListener('click', nextTrack);
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', nextTrack);
+            progressContainer.addEventListener('click', setProgress);
+            volumeSlider.addEventListener('input', setVolume);
+            
+            musicToggle.addEventListener('click', () => {
+                musicPlayer.classList.toggle('hidden');
+            });
+            
+            playlistToggle.addEventListener('click', () => {
+                playlistContainer.classList.toggle('show');
+            });
+            
+            closePlaylist.addEventListener('click', () => {
+                playlistContainer.classList.remove('show');
+            });
+            
+            // 默认播放第一首曲目
+            playTrack(0);
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化导航栏滚动效果
+            window.addEventListener('scroll', function() {
+                const navbar = document.getElementById('navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('py-2');
+                    navbar.classList.add('shadow-md');
+                } else {
+                    navbar.classList.remove('py-2');
+                    navbar.classList.remove('shadow-md');
+                }
+            });
+
+            // 初始化移动端菜单
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 初始化搜索功能
+            initSearch();
+
+            // 初始化登录/注册功能
+            initAuth();
+
+            // 初始化用户状态
+            updateUserStatus();
+
+            // 初始化书签功能
+            initBookmark();
+
+            // 初始化关注作者功能
+            initFollowAuthor();
+
+            // 初始化订阅功能
+            initSubscription();
+            
+            // 初始化音乐播放器
+            initMusicPlayer();
+        });
+
+        // 搜索功能初始化
+        function initSearch() {
+            const searchToggle = document.getElementById('search-toggle');
+            const searchBar = document.getElementById('search-bar');
+            const searchInput = document.getElementById('search-input');
+            const searchResults = document.getElementById('search-results');
+            const resultsContainer = document.getElementById('results-container');
+            
+            let isSearchBarVisible = false;
+
+            // 切换搜索框显示/隐藏
+            searchToggle.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                isSearchBarVisible = !searchBar.classList.toggle('hidden');
+                
+                if (isSearchBarVisible) {
+                    searchInput.focus();
+                }
+            });
+
+            // 搜索输入处理
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim().toLowerCase();
+                if (query.length < 2) {
+                    searchResults.classList.add('hidden');
+                    return;
+                }
+
+                // 模拟搜索结果
+                const matchedStories = stories.filter(story => 
+                    story.title.toLowerCase().includes(query) || 
+                    story.author.toLowerCase().includes(query) ||
+                    story.category.toLowerCase().includes(query)
+                );
+
+                // 显示搜索结果
+                resultsContainer.innerHTML = '';
+                if (matchedStories.length > 0) {
+                    matchedStories.forEach(story => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'flex items-center p-2 hover:bg-neutral-700 rounded-lg transition-colors';
+                        resultItem.innerHTML = `
+                            <img src="${story.image}" alt="${story.title}" class="w-12 h-12 object-cover rounded mr-3">
+                            <div class="flex-1">
+                                <div class="font-medium">${story.title}</div>
+                                <div class="text-sm text-neutral-400">${story.author} · ${story.category}</div>
+                            </div>
+                            <span class="text-xs text-neutral-400">${story.rating} <i class="fa fa-star"></i></span>
+                        `;
+                        resultsContainer.appendChild(resultItem);
+                    });
+                    searchResults.classList.remove('hidden');
+                } else {
+                    resultsContainer.innerHTML = '<div class="text-center py-3 text-neutral-400">没有找到相关结果</div>';
+                    searchResults.classList.remove('hidden');
+                }
+            });
+
+            // 点击页面其他区域关闭搜索框
+            document.addEventListener('click', function(e) {
+               // 只有当搜索框可见且点击的不是搜索框内部元素时才关闭
+                if (isSearchBarVisible && !searchBar.contains(e.target)) {
+                    searchBar.classList.add('hidden');
+                    isSearchBarVisible = false;
+                }
+            });
+            
+            // 点击搜索框内部时阻止事件冒泡
+            searchBar.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // 初始化登录/注册功能
+        function initAuth() {
+            const authModal = document.getElementById('auth-modal');
+            const loginBtn = document.getElementById('login-btn');
+            const registerBtn = document.getElementById('register-btn');
+            const mobileLoginBtn = document.getElementById('mobile-login-btn');
+            const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+            const closeModal = document.getElementById('close-modal');
+            const switchToRegister = document.getElementById('switch-to-register');
+            const switchToLogin = document.getElementById('switch-to-login');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const loginFormContainer = document.getElementById('login-form-container');
+            const registerFormContainer = document.getElementById('register-form-container');
+            const modalTitle = document.getElementById('modal-title');
+            const logoutBtn = document.getElementById('logout-btn');
+            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+
+            // 打开登录模态框
+            function openLoginModal() {
+                modalTitle.textContent = '登录';
+                loginFormContainer.classList.remove('hidden');
+                registerFormContainer.classList.add('hidden');
+                authModal.classList.remove('hidden');
+                // 添加模态框显示动画
+                setTimeout(() => {
+                    authModal.querySelector('div').classList.add('scale-100');
+                    authModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            }
+
+            // 打开注册模态框
+            function openRegisterModal() {
+                modalTitle.textContent = '注册';
+                loginFormContainer.classList.add('hidden');
+                registerFormContainer.classList.remove('hidden');
+                authModal.classList.remove('hidden');
+                // 添加模态框显示动画
+                setTimeout(() => {
+                    authModal.querySelector('div').classList.add('scale-100');
+                    authModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            }
+
+            // 关闭模态框
+            function closeModalFunc() {
+                authModal.querySelector('div').classList.remove('scale-100');
+                authModal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => {
+                    authModal.classList.add('hidden');
+                }, 200);
+            }
+
+            // 绑定登录/注册按钮事件
+            loginBtn.addEventListener('click', openLoginModal);
+            registerBtn.addEventListener('click', openRegisterModal);
+            mobileLoginBtn.addEventListener('click', openLoginModal);
+            mobileRegisterBtn.addEventListener('click', openRegisterModal);
+            closeModal.addEventListener('click', closeModalFunc);
+            switchToRegister.addEventListener('click', openRegisterModal);
+            switchToLogin.addEventListener('click', openLoginModal);
+
+            // 点击模态框外部关闭
+            authModal.addEventListener('click', function(e) {
+                if (e.target === authModal) {
+                    closeModalFunc();
+                }
+            });
+
+            // 登录表单提交
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!email || !password) {
+                    alert('请输入邮箱和密码');
+                    return;
+                }
+
+                // 验证用户
+                if (users[email] && users[email].password === password) {
+                    currentUser = {
+                        email: email,
+                        username: users[email].username,
+                        avatar: users[email].avatar
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateUserStatus();
+                    closeModalFunc();
+                    alert('登录成功！');
+                } else {
+                    alert('邮箱或密码错误');
+                }
+            });
+
+            // 注册表单提交
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+
+                if (!username || !email || !password) {
+                    alert('请填写所有必填字段');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    alert('两次输入的密码不一致');
+                    return;
+                }
+
+                // 检查邮箱是否已注册
+                if (users[email]) {
+                    alert('该邮箱已被注册');
+                    return;
+                }
+
+                // 创建新用户
+                users[email] = {
+                    username: username,
+                    password: password,
+                    avatar: `https://picsum.photos/200/200?user${Object.keys(users).length + 1}`,
+                    bookmarks: [],
+                    following: []
+                };
+
+                localStorage.setItem('users', JSON.stringify(users));
+
+                // 自动登录
+                currentUser = {
+                    email: email,
+                    username: username,
+                    avatar: users[email].avatar
+                };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                updateUserStatus();
+                closeModalFunc();
+                alert('注册成功！');
+            });
+
+            // 注销
+            logoutBtn.addEventListener('click', function() {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                updateUserStatus();
+            });
+
+            mobileLogoutBtn.addEventListener('click', function() {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                updateUserStatus();
+                mobileMenu.classList.add('hidden');
+            });
+        }
+
+        // 更新用户状态显示
+        function updateUserStatus() {
+            const loggedIn = document.getElementById('logged-in');
+            const loginRegister = document.getElementById('login-register');
+            const mobileLoggedIn = document.getElementById('mobile-logged-in');
+            const mobileLoginRegister = document.getElementById('mobile-login-register');
+            const usernameDisplay = document.getElementById('username-display');
+            const userAvatar = document.getElementById('user-avatar');
+            const mobileUsername = document.getElementById('mobile-username');
+            const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+
+            if (currentUser) {
+                // 用户已登录
+                loggedIn.classList.remove('hidden');
+                loginRegister.classList.add('hidden');
+                mobileLoggedIn.classList.remove('hidden');
+                mobileLoginRegister.classList.add('hidden');
+                
+                usernameDisplay.textContent = currentUser.username;
+                userAvatar.src = currentUser.avatar;
+                mobileUsername.textContent = currentUser.username;
+                mobileUserAvatar.src = currentUser.avatar;
+                
+                // 更新书签状态
+                updateBookmarkStatus();
+                
+                // 更新关注状态
+                updateFollowStatus();
+            } else {
+                // 用户未登录
+                loggedIn.classList.add('hidden');
+                loginRegister.classList.remove('hidden');
+                mobileLoggedIn.classList.add('hidden');
+                mobileLoginRegister.classList.remove('hidden');
+            }
+        }
+
+        // 初始化书签功能
+        function initBookmark() {
+            document.querySelectorAll('.add-to-bookmark').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!currentUser) {
+                        alert('请先登录');
+                        return;
+                    }
+                    
+                    const storyId = parseInt(this.getAttribute('data-id'));
+                    const isBookmarked = this.classList.contains('text-accent');
+                    
+                    if (isBookmarked) {
+                        // 移除书签
+                        users[currentUser.email].bookmarks = users[currentUser.email].bookmarks.filter(id => id !== storyId);
+                        this.classList.remove('text-accent');
+                        this.classList.add('text-secondary');
+                        this.innerHTML = '<i class="fa fa-bookmark-o"></i>';
+                        alert('已从书签中移除');
+                    } else {
+                        // 添加书签
+                        users[currentUser.email].bookmarks.push(storyId);
+                        this.classList.remove('text-secondary');
+                        this.classList.add('text-accent');
+                        this.innerHTML = '<i class="fa fa-bookmark"></i>';
+                        alert('已添加到书签');
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                });
+            });
+        }
+
+        // 更新书签状态
+        function updateBookmarkStatus() {
+            if (!currentUser) return;
+            
+            const userBookmarks = users[currentUser.email].bookmarks || [];
+            
+            document.querySelectorAll('.add-to-bookmark').forEach(button => {
+                const storyId = parseInt(button.getAttribute('data-id'));
+                
+                if (userBookmarks.includes(storyId)) {
+                    button.classList.remove('text-secondary');
+                    button.classList.add('text-accent');
+                    button.innerHTML = '<i class="fa fa-bookmark"></i>';
+                } else {
+                    button.classList.remove('text-accent');
+                    button.classList.add('text-secondary');
+                    button.innerHTML = '<i class="fa fa-bookmark-o"></i>';
+                }
+            });
+        }
+
+        // 初始化关注作者功能
+        function initFollowAuthor() {
+            document.querySelectorAll('.follow-author').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!currentUser) {
+                        alert('请先登录');
+                        return;
+                    }
+                    
+                    const authorId = parseInt(this.getAttribute('data-id'));
+                    const isFollowing = this.textContent.trim() === '已关注';
+                    
+                    if (isFollowing) {
+                        // 取消关注
+                        users[currentUser.email].following = users[currentUser.email].following.filter(id => id !== authorId);
+                        this.textContent = '关注作者';
+                        this.classList.remove('bg-secondary', 'text-white');
+                        this.classList.add('border', 'border-secondary', 'text-secondary');
+                        alert('已取消关注');
+                    } else {
+                        // 关注作者
+                        users[currentUser.email].following.push(authorId);
+                        this.textContent = '已关注';
+                        this.classList.remove('border', 'border-secondary', 'text-secondary');
+                        this.classList.add('bg-secondary', 'text-white');
+                        alert('已关注该作者');
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                });
+            });
+        }
+
+        // 更新关注状态
+        function updateFollowStatus() {
+            if (!currentUser) return;
+            
+            const userFollowing = users[currentUser.email].following || [];
+            
+            document.querySelectorAll('.follow-author').forEach(button => {
+                const authorId = parseInt(button.getAttribute('data-id'));
+                
+                if (userFollowing.includes(authorId)) {
+                    button.textContent = '已关注';
+                    button.classList.remove('border', 'border-secondary', 'text-secondary');
+                    button.classList.add('bg-secondary', 'text-white');
+                } else {
+                    button.textContent = '关注作者';
+                    button.classList.remove('bg-secondary', 'text-white');
+                    button.classList.add('border', 'border-secondary', 'text-secondary');
+                }
+            });
+        }
+
+        // 初始化订阅功能
+        function initSubscription() {
+            const subscriptionForm = document.getElementById('subscription-form');
+            const subscriptionEmail = document.getElementById('subscription-email');
+            const subscriptionSuccess = document.getElementById('subscription-success');
+            
+            if (subscriptionForm) {
+                subscriptionForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = subscriptionEmail.value.trim();
+                    
+                    if (!email) {
+                        alert('请输入您的邮箱地址');
+                        return;
+                    }
+                    
+                    // 模拟订阅成功
+                    subscriptionEmail.value = '';
+                    subscriptionSuccess.classList.remove('hidden');
+                    
+                    // 3秒后隐藏成功消息
+                    setTimeout(() => {
+                        subscriptionSuccess.classList.add('hidden');
+                    }, 3000);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
