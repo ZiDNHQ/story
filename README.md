@@ -96,25 +96,6 @@
 - 使用 Tailwind CSS 工具类辅助页面布局和样式开发
 - 使用本地图片和音频资源，减少对后端服务的依赖
 
-## Git 初始化与提交
-
-在 `工程` 文件夹中打开终端，执行：
-
-```bash
-git init
-git add .
-git commit -m "初始化故事森林网站"
-```
-
-如果需要关联 GitHub 远程仓库：
-
-```bash
-git branch -M main
-git remote add origin https://github.com/你的用户名/你的仓库名.git
-git push -u origin main
-```
-
-请将命令中的远程仓库地址替换为自己的 GitHub 仓库地址。
 
 ## 后续待完善方向
 
