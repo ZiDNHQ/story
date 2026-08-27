@@ -97,6 +97,8 @@
 - 使用 Tailwind CSS 工具类辅助页面布局和样式开发
 - 使用本地图片和音频资源，减少对后端服务的依赖
 
+## 演示视频
+[演示视频链接]( https://www.bilibili.com/video/BV1Me896yEW5/?share_source=copy_web&vd_source=db1ce347476ff1ced70a342979dfd5ee)
 
 ## 后续待完善方向
 
